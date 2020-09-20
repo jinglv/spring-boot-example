@@ -9,7 +9,7 @@ Spring Boot 主要提供了如下功能：
 3. 提供了一系列通用的非功能性的功能，例如嵌入式服务器、安全管理、健康检测等。
 4. 绝对没有代码生成，也不需要XML配置。
 
-Spring Boot 的出现让 Java 开发又回归简单，因为确确实实解决了开发中的痛点，因此这个技术得到了非常广泛的使用，松哥很多朋友出去面试 Java 工程师，从2017年年初开始，Spring Boot基本就是必问，现在流行的 Spring Cloud 微服务也是基于 Spring Boot，因此，所有的 Java 工程师都有必要掌握好 Spring Boot。
+Spring Boot 的出现让 Java 开发又回归简单，因为确确实实解决了开发中的痛点，因此这个技术得到了非常广泛的使用，从2017年年初开始，Spring Boot基本就是必问，现在流行的 Spring Cloud 微服务也是基于 Spring Boot，因此，所有的 Java 工程师都有必要掌握好 Spring Boot。
 
 ## SpringBoot工程创建
 ### 第一种：在线创建
