@@ -116,4 +116,185 @@ shiro提供了一套加密/解密的组件，方便开发。比如提供常用�
 
    ![image-20200920153913626](https://gitee.com/JeanLv/study_image2/raw/master///image-20200920153913626.png)
 
-3. 
+3. 认证开发代码
+
+   ```java
+   package com.demo.shiro;
+   
+   import org.apache.shiro.SecurityUtils;
+   import org.apache.shiro.authc.IncorrectCredentialsException;
+   import org.apache.shiro.authc.UnknownAccountException;
+   import org.apache.shiro.authc.UsernamePasswordToken;
+   import org.apache.shiro.mgt.DefaultSecurityManager;
+   import org.apache.shiro.realm.text.IniRealm;
+   import org.apache.shiro.subject.Subject;
+   
+   /**
+    * @author jinglv
+    * @date 2020/09/20
+    */
+   public class TestAuthenticator {
+   
+       public static void main(String[] args) {
+           // 1.创建安全管理器对象
+           DefaultSecurityManager securityManager = new DefaultSecurityManager();
+   
+           // 2.给安全管理器设置Realm
+           securityManager.setRealm(new IniRealm("classpath:shiro.ini"));
+   
+           // 3.SecurityUtils 给全局安全工具类设置安全管理器
+           SecurityUtils.setSecurityManager(securityManager);
+   
+           // 4.关键对象：Subject主体
+           Subject subject = SecurityUtils.getSubject();
+   
+           // 5.创建令牌
+           UsernamePasswordToken token = new UsernamePasswordToken("admin", "123456");
+   
+           try {
+               // 6.用户认证
+               System.out.println("认证前状态：" + subject.isAuthenticated());
+               subject.login(token);
+               System.out.println("认证后状态：" + subject.isAuthenticated());
+           } catch (UnknownAccountException e) {
+               e.printStackTrace();
+               System.out.println("认证失败：用户名不存在");
+           } catch (IncorrectCredentialsException e) {
+               e.printStackTrace();
+               System.out.println("认证失败：密码错误");
+           }
+   
+       }
+   }
+   ```
+
+   提示：一些常用的异常
+
+   - DisabledAccountException（帐号被禁用）
+   - LockedAccountException（帐号被锁定）
+   - ExcessiveAttemptsException（登录失败次数过多）
+   - ExpiredCredentialsException（凭证过期
+
+## 自定义Realm
+
+上边的程序使用的是Shiro自带的IniRealm，IniRealm从ini配置文件中读取用户的信息，大部分情况下需要从系统的数据库中读取用户信息，所以需要自定义realm。
+
+### shiro提供的Realm
+
+![image-20200921184612980](https://gitee.com/JeanLv/study_image/raw/master///image-20200921184612980.png)
+
+### 根据认证源码认证使用的是SimpleAccountRealm
+
+![image-20200921184708924](https://gitee.com/JeanLv/study_image/raw/master///image-20200921184708924.png)
+
+SimpleAccountRealm的部分源码中有两个方法一个是**认证**一个是**授权**
+
+AuthorizingRealm 授权Realm doGetAuthorizationInfo
+
+AuthenticatingRealm 认证Realm doGetAuthenticationInfo
+
+### 自定义Realm
+
+```java
+package com.demo.shiro;
+
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.subject.PrincipalCollection;
+
+/**
+ * 自定义Realm实现，将认证/授权数据的来源转为数据库
+ *
+ * @author jingLv
+ * @date 2020/09/22
+ */
+public class CustomerRealm extends AuthorizingRealm {
+    /**
+     * 授权
+     *
+     * @param principalCollection
+     * @return
+     */
+    @Override
+    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
+        return null;
+    }
+
+    /**
+     * 认证
+     *
+     * @param authenticationToken
+     * @return
+     * @throws AuthenticationException
+     */
+    @Override
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
+        // 在token中获取用户名
+        String principal = (String) authenticationToken.getPrincipal();
+        // 根据身份信息使用jdbc mybatis查询相关数据库
+        if ("admin".equals(principal)) {
+            // 参数1：返回数据库中的正确的用户名
+            // 参数2：返回数据库中的正确的密码
+            // 参数3：提供当前realm的名字，使用this.getName()
+            return new SimpleAuthenticationInfo(principal, "admin", this.getName());
+        }
+        return null;
+    }
+}
+
+```
+
+
+
+### 使用自定义Realm认证
+
+```java
+package com.demo.shiro;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.mgt.DefaultSecurityManager;
+import org.apache.shiro.subject.Subject;
+
+/**
+ * 使用自定义realm
+ *
+ * @author jingLv
+ * @date 2020/09/22
+ */
+public class TestAuthenticatorCustomerRealm {
+
+    public static void main(String[] args) {
+        // 创建SecurityManager
+        DefaultSecurityManager defaultSecurityManager = new DefaultSecurityManager();
+        //设置自定义realm
+        defaultSecurityManager.setRealm(new CustomerRealm());
+        //给安全工具类设置安全管理器
+        SecurityUtils.setSecurityManager(defaultSecurityManager);
+        //通过安全工具类获取subject
+        Subject subject = SecurityUtils.getSubject();
+        // 创建token
+        UsernamePasswordToken token = new UsernamePasswordToken("admin", "admin");
+
+        try {
+            subject.login(token);
+            System.out.println("登录成功--");
+        } catch (IncorrectCredentialsException e) {
+            e.printStackTrace();
+            System.out.println("密码错误！");
+        } catch (UnknownAccountException e) {
+            e.printStackTrace();
+            System.out.println("用户名错误！");
+        }
+    }
+}
+```
+
+
+

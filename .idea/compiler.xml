@@ -6,9 +6,9 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="spring-boot-shiro" />
         <module name="spring-boot-maven" />
         <module name="spring-boot-banner" />
+        <module name="spring-boot-shiro" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
