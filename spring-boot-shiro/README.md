@@ -315,3 +315,138 @@ MD5算法：
 
 
 盐（Salt），在密码学中，是指通过在密码任意固定位置插入特定的字符串，让散列后的结果和使用原始密码的散列结果不相符，这种过程称之为“加盐”。
+
+
+
+### 测试Shiro中加密的字符串
+
+```java
+package com.demo.shiro;
+
+import org.apache.shiro.crypto.hash.Md5Hash;
+
+/**
+ * @author jingLv
+ * @date 2020/09/23
+ */
+public class TestShiroMD5 {
+    public static void main(String[] args) {
+        //创建一个MD5算法
+/*        Md5Hash md5Hash = new Md5Hash();
+
+        md5Hash.setBytes("123".getBytes());
+
+        String s = md5Hash.toHex();
+        System.out.println(s);*/
+
+        // 使用MD5
+        Md5Hash md5Hash = new Md5Hash("123");
+        System.out.println(md5Hash.toHex());
+
+        // 使用MD5 + Salt处理
+        Md5Hash md5Hash1 = new Md5Hash("123", "X0*7ps");
+        System.out.println(md5Hash1.toHex());
+
+        // 使用MD5 + salt + hash散列
+        Md5Hash md5Hash2 = new Md5Hash("123", "X0*7ps", 1024);
+        System.out.println(md5Hash2.toHex());
+    }
+}
+```
+
+### 自定义md5+salt/+(1024散列)的realm
+
+```java
+package com.demo.shiro;
+
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.util.ByteSource;
+
+/**
+ * 使用自定义realm加入md5+salt+hash
+ *
+ * @author jingLv
+ * @date 2020/09/23
+ */
+public class CustomerMD5Realm extends AuthorizingRealm {
+    @Override
+    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
+        return null;
+    }
+
+    @Override
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
+        // 获取身份信息
+        String principal = (String) authenticationToken.getPrincipal();
+        // 根据用户名查询数据库
+        if ("admin".equals(principal)) {
+            // 数据库查到的密码是个密文
+            //参数1：数据库用户名
+            //参数2：数据库md5+salt/1024散列之后的密码
+            //参数3：注册时的随机盐
+            //参数4：realm的名字
+            return new SimpleAuthenticationInfo(principal, "e4f9bf3e0c58f045e62c23c533fcf633", ByteSource.Util.bytes("X0*7ps"), this.getName());
+        }
+        return null;
+    }
+}
+```
+
+### 使用md5+salt/+(1024散列)的认证
+
+```java
+package com.demo.shiro;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
+import org.apache.shiro.mgt.DefaultSecurityManager;
+import org.apache.shiro.subject.Subject;
+
+/**
+ * @author jingLv
+ * @date 2020/09/23
+ */
+public class TestAuthenticatorCustomerMD5Realm {
+    public static void main(String[] args) {
+        // 创建安全管理器
+        DefaultSecurityManager defaultSecurityManager = new DefaultSecurityManager();
+        // 设置自定义realm获取认证数据
+        CustomerMD5Realm md5Realm = new CustomerMD5Realm();
+        // 设置realm使用hash凭证匹配器
+        HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
+        credentialsMatcher.setHashAlgorithmName("md5");
+        // 设置散列次数
+        credentialsMatcher.setHashIterations(1024);
+        md5Realm.setCredentialsMatcher(credentialsMatcher);
+        //注入realm
+        defaultSecurityManager.setRealm(md5Realm);
+        // 将安全管理器注入安全工具
+        SecurityUtils.setSecurityManager(defaultSecurityManager);
+        // 通过安全工具获取subject
+        Subject subject = SecurityUtils.getSubject();
+        // 认证
+        UsernamePasswordToken token = new UsernamePasswordToken("admin", "123");
+
+        try {
+            subject.login(token);
+            System.out.println("登录成功--");
+        } catch (IncorrectCredentialsException e) {
+            e.printStackTrace();
+            System.out.println("密码错误！");
+        } catch (UnknownAccountException e) {
+            e.printStackTrace();
+            System.out.println("用户名错误！");
+        }
+    }
+}
+```
+
