@@ -6,9 +6,10 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="spring-boot-mybatis" />
+        <module name="spring-boot-shiro" />
         <module name="spring-boot-maven" />
         <module name="spring-boot-banner" />
-        <module name="spring-boot-shiro" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -19,6 +20,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="spring-boot-banner" options="-parameters" />
       <module name="spring-boot-maven" options="-parameters" />
+      <module name="spring-boot-mybatis" options="-parameters" />
       <module name="spring-boot-shiro" options="-parameters" />
     </option>
   </component>
