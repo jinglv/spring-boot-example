@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!--1.指明对应文件的 Mapper 类地址-->
+<mapper namespace="com.example.mybatis.mapper.UserMapper">
+    <!--2.配置表结构和类的对应关系-->
+    <!--
+        这里为了更好的贴近工作情况，将类的两个字段和数据库字段设置为不一致，其中一个使用了枚举。使用枚举有一个非常大的优点，插入此属性的数据会自动进行校验，如果不是枚举的内容会报错。
+    -->
+    <resultMap id="BaseResultMap" type="com.example.mybatis.model.User">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="user_name" property="userName" jdbcType="VARCHAR"/>
+        <result column="pass_word" property="passWord" jdbcType="VARCHAR"/>
+        <result column="gender" property="gender" javaType="com.example.mybatis.enums.GenderEnum"/>
+        <result column="nick_name" property="nickName" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--3. 写具体的SQL语句-->
+    <!--公用的一些XML片段可以提取出来，在其他SQL中去引用-->
+    <sql id="Base_Column_List">
+        id, user_name, pass_word, gender, nick_name
+    </sql>
+
+    <!--查询所有的用户-->
+    <select id="getAllUsers" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+    </select>
+
+    <!--根据id查询用户-->
+    <select id="getOne" parameterType="Long" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        WHERE id = #{id}
+    </select>
+</mapper>

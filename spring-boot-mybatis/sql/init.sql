@@ -12,3 +12,5 @@ CREATE TABLE users
   AUTO_INCREMENT = 1
   DEFAULT CHARSET = utf8 COMMENT '用户表';
 
+INSERT INTO users(user_name, pass_word, gender, nick_name)
+VALUES ('admin', '123123', 'MAN', '首脑');

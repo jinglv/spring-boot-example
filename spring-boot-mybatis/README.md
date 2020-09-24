@@ -50,7 +50,7 @@ MyBatis支持普通的SQL查询，存储过程和高级映射的优秀持久层�
 
 2. 项目引入依赖
 
-   ```xml
+   ```
    <dependency>
      <groupId>org.mybatis.spring.boot</groupId>
      <artifactId>mybatis-spring-boot-starter</artifactId>
@@ -80,16 +80,16 @@ MyBatis支持普通的SQL查询，存储过程和高级映射的优秀持久层�
    ```pro
    mybatis.config-location=classpath:mybatis/mybatis-config.xml
    mybatis.mapper-locations=classpath:mybatis/mapper/*.xml
-   mybatis.type-aliases-package=com.example.mybatis.mapper
+   mybatis.type-aliases-package=com.example.mybatis.model
    
    spring.datasource.url=jdbc:mysql://localhost:3306/test?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=true
    spring.datasource.username=root
-   spring.datasource.password=root
+   spring.datasource.password=123123
    spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
    ```
 
-   - mybatis.config-location，配置 mybatis-config.xml 路径，mybatis-config.xml 中配置 MyBatis 基础属性；
-   - mybatis.mapper-locations，配置 Mapper 对应的 XML 文件路径；
+   - mybatis.config-location，配置mybatis-config.xml路径，mybatis-config.xml中配置MyBatis基础属性；
+   - mybatis.mapper-locations，配置Mapper对应的XML文件路径；
    - mybatis.type-aliases-package，配置项目中实体类包路径；
    - spring.datasource.*，数据源配置。
 
@@ -126,4 +126,27 @@ MyBatis支持普通的SQL查询，存储过程和高级映射的优秀持久层�
 
 
 ## 示例流程
-
+### MyBatis功能属性
+mybatis-config.xml主要配置常用的typeAliases，设置类型别名，为Java类型设置一个短的名字。它只和XML配置有关，存在的意义仅在于用来减少类完全限定名的冗余。
+```
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <typeAliases>
+        <typeAlias alias="Integer" type="java.lang.Integer"/>
+        <typeAlias alias="Long" type="java.lang.Long"/>
+        <typeAlias alias="HashMap" type="java.util.HashMap"/>
+        <typeAlias alias="LinkedHashMap" type="java.util.LinkedHashMap"/>
+        <typeAlias alias="ArrayList" type="java.util.ArrayList"/>
+        <typeAlias alias="LinkedList" type="java.util.LinkedList"/>
+    </typeAliases>
+</configuration>
+```
+这样在使用*Mapper.xml，需要引入直接这样写：
+```
+resultType="Integer" 
+//或者
+parameterType="Long"
+```
+### 添加映射文件
+在mapper目录下，新增Mapper文件，UserMapper.xml
