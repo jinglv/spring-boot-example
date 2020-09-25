@@ -23,4 +23,25 @@ public interface UserMapper {
      * @return 返回用户数据
      */
     User getOne(Long id);
+
+    /**
+     * 新增用户
+     *
+     * @param user 用户信息
+     */
+    void insertUser(User user);
+
+    /**
+     * 修改用户信息
+     *
+     * @param user 用户信息
+     */
+    void updateUser(User user);
+
+    /**
+     * 根据id删除用户信息
+     *
+     * @param id 表的主键
+     */
+    void deleteUser(Long id);
 }

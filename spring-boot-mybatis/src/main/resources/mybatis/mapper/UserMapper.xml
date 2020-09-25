@@ -34,4 +34,28 @@
         FROM users
         WHERE id = #{id}
     </select>
+
+    <!--新增用户-->
+    <insert id="insertUser" parameterType="com.example.mybatis.model.User">
+        INSERT INTO users(user_name, pass_word, gender, nick_name)
+        VALUES (#{userName}, #{passWord}, #{gender}, #{nickName})
+    </insert>
+
+    <!--修改用户信息-->
+    <update id="updateUser" parameterType="com.example.mybatis.model.User">
+        UPDATE users
+        SET
+        <if test="userName != null">user_name = #{userName},</if>
+        <if test="passWord != null">pass_word = #{passWord},</if>
+        nick_name = #{nickName}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="deleteUser" parameterType="Long">
+        DELETE
+        FROM users
+        WHERE id = #{id}
+    </delete>
+
 </mapper>

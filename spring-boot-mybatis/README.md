@@ -149,4 +149,4 @@ resultType="Integer"
 parameterType="Long"
 ```
 ### 添加映射文件
-在mapper目录下，新增Mapper文件，UserMapper.xml
+在mapper目录下，新增Mapper文件，UserMapper.xml，见src/resources/mybatis/mapper/UserMapper.xml

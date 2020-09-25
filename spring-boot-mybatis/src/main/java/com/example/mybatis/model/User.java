@@ -19,4 +19,14 @@ public class User implements Serializable {
     private String passWord;
     private GenderEnum gender;
     private String nickName;
+
+    public User() {
+    }
+
+    public User(String userName, String passWord, GenderEnum gender, String nickName) {
+        this.userName = userName;
+        this.passWord = passWord;
+        this.gender = gender;
+        this.nickName = nickName;
+    }
 }

@@ -1,5 +1,6 @@
 package com.example.mybatis.mapper;
 
+import com.example.mybatis.enums.GenderEnum;
 import com.example.mybatis.model.User;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,5 +31,25 @@ public class UserMapperTest {
     public void getOne() {
         User user = userMapper.getOne(1L);
         System.out.println(user.toString());
+    }
+
+    @Test
+    public void insertUser() {
+        userMapper.insertUser(new User("咪咪", "123123", GenderEnum.WOMAN, "阿咪"));
+    }
+
+    @Test
+    public void updateUser() {
+        // 1.先查询用户信息
+        User user = userMapper.getOne(1L);
+        // 2. 修改用户
+        user.setUserName("花花");
+        // 3.调用修改
+        userMapper.updateUser(user);
+    }
+
+    @Test
+    public void deleteUser() {
+        userMapper.deleteUser(1l);
     }
 }
