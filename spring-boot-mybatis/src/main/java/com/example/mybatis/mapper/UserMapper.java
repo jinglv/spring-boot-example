@@ -1,6 +1,7 @@
 package com.example.mybatis.mapper;
 
 import com.example.mybatis.model.User;
+import com.example.mybatis.param.UserParam;
 
 import java.util.List;
 
@@ -44,4 +45,20 @@ public interface UserMapper {
      * @param id 表的主键
      */
     void deleteUser(Long id);
+
+    /**
+     * 分页查询数据
+     *
+     * @param userParam user的分类
+     * @return 返回数据集合
+     */
+    List<User> getList(UserParam userParam);
+
+    /**
+     * 统计出查询结果的总数
+     *
+     * @param userParam user的分类
+     * @return 返回总数
+     */
+    int getCount(UserParam userParam);
 }

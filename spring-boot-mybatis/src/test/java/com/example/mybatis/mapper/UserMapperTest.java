@@ -2,6 +2,8 @@ package com.example.mybatis.mapper;
 
 import com.example.mybatis.enums.GenderEnum;
 import com.example.mybatis.model.User;
+import com.example.mybatis.param.UserParam;
+import com.example.mybatis.result.Page;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,5 +53,17 @@ public class UserMapperTest {
     @Test
     public void deleteUser() {
         userMapper.deleteUser(1l);
+    }
+
+    @Test
+    public void testPage() {
+        UserParam userParam = new UserParam();
+        userParam.setGender("WOMAN");
+        userParam.setCurrentPage(1);
+
+        List<User> users = userMapper.getList(userParam);
+        long count = userMapper.getCount(userParam);
+        Page page = new Page(userParam, count, users);
+        System.out.println(page);
     }
 }

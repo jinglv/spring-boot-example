@@ -20,7 +20,20 @@
         id, user_name, pass_word, gender, nick_name
     </sql>
 
+    <!--先将查询条件提取出-->
+    <sql id="Base_Where_List">
+        <if test="userName != null  and userName != ''">
+            and user_name = #{userName}
+        </if>
+        <if test="gender != null and gender != ''">
+            and gender = #{gender}
+        </if>
+    </sql>
+
     <!--查询所有的用户-->
+    <!--
+        使用include引入上面定义需要查询的表字段
+    -->
     <select id="getAllUsers" resultMap="BaseResultMap">
         SELECT
         <include refid="Base_Column_List"/>
@@ -42,6 +55,9 @@
     </insert>
 
     <!--修改用户信息-->
+    <!--
+        update的SQL使用了if标签，可以根据不同的条件生产动态SQL
+    -->
     <update id="updateUser" parameterType="com.example.mybatis.model.User">
         UPDATE users
         SET
@@ -57,5 +73,25 @@
         FROM users
         WHERE id = #{id}
     </delete>
+
+    <!--从对象 UserParam 中获取分页信息和查询条件，最后进行组合-->
+    <select id="getList" resultMap="BaseResultMap" parameterType="com.example.mybatis.param.UserParam">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        WHERE 1=1
+        <include refid="Base_Where_List"/>
+        ORDER BY id DESC
+        LIMIT #{beginLine} , #{pageSize}
+    </select>
+
+    <!--前端需要展示总共的页码，因此需要统计出查询结果的总数-->
+    <select id="getCount" resultType="Integer" parameterType="com.example.mybatis.param.UserParam">
+        select
+        count(1)
+        from users
+        where 1=1
+        <include refid="Base_Where_List"/>
+    </select>
 
 </mapper>

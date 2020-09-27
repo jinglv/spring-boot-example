@@ -149,4 +149,16 @@ resultType="Integer"
 parameterType="Long"
 ```
 ### 添加映射文件
-在mapper目录下，新增Mapper文件，UserMapper.xml，见src/resources/mybatis/mapper/UserMapper.xml
+在mapper目录下，新增Mapper文件，UserMapper.xml，见src/resources/mybatis/mapper/UserMapper.xml， 在Mapper里配置表结构和类的对应关系，在编写具体的SQL
+
+### 编写Dao层的代码
+com.example.mybatis.mapper包下UserMapper.java，这里的方法名需要和 XML 配置中的 id 属性一致，不然会找不到方法去对应执行的 SQL。
+
+## 分页查询
+多条件分页查询是实际工作中最常使用的功能之一，MyBatis特别擅长处理这类的问题。在实际工作中，会对分页进行简单的封装，方便前端使用。另外在Web开发规范使用中，Web层的参数会以param为后缀的对象进行传参，以result结尾的实体类封装返回的数据。
+
+### 示例流程
+1. 定义一个分页的基础类
+2. 配置具体的SQL，将查询条件提取出来
+3. 从对UserParam中获取分页信息和查询条件，进行组合
+
