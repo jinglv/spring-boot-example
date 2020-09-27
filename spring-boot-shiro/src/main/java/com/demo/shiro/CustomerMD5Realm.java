@@ -16,11 +16,25 @@ import org.apache.shiro.util.ByteSource;
  * @date 2020/09/23
  */
 public class CustomerMD5Realm extends AuthorizingRealm {
+    /**
+     * 授权
+     *
+     * @param principalCollection
+     * @return
+     */
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
+        System.out.println("=========");
         return null;
     }
 
+    /**
+     * 认证
+     *
+     * @param authenticationToken
+     * @return
+     * @throws AuthenticationException
+     */
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
         // 获取身份信息

@@ -450,3 +450,257 @@ public class TestAuthenticatorCustomerMD5Realm {
 }
 ```
 
+
+
+## Shiro中的授权
+
+### 授权
+
+授权，即访问控制，控制谁能访问哪些资源。主体进行身份认证后需要分配权限可访问系统的资源，对于某些资源没有权限是无法访问的。
+
+### 关键对象
+
+授权可简单理解为who对what(which)进行How操作：
+
+- Who:即主体（Subject），主体需要访问系统中的资源。
+- What:即资源（Resource），如系统菜单、页面、按钮、类方法，系统商品信息等。资源包含资源类型和资源实例，比如商品信息为资源类型，类型为t01的商品为资源实例，编号为001的商品信息也属于资源实例。
+- How:权限/许可（Permission），规定了主体对资源的操作许可，权限离开资源没有意义，如用户查询权限，用户添加权限，某个类方法的调用权限，编号为001用户的修改权限等，通过权限可知主体对哪些资源都有哪些操作许可。
+
+### 授权流程
+
+![image-20200927113729438](https://gitee.com/JeanLv/study_image/raw/master///image-20200927113729438.png)
+
+### 授权方式
+
+- 基于**角色**的访问控制
+
+  - RBAC基于角色的访问控制（Role-Based Access Control）是以角色为中心进行访问控制
+
+    ```java
+    if(subject.hashRole("admin")) {
+      // 操作什么资源
+    }
+    ```
+
+    
+
+- 基于**资源**的访问控制
+
+  - RBAC基于资源的访问控制（Resource-Based Access Control）是以资源为中心进行访问控制
+
+    ```java
+    if(subject.isPermission("user:update:01")) { // 资源实例
+      // 对01的用户具有更新权限
+    }
+    
+    if(subject.isPermission("user:update:*")) { // 资源类型
+      // 对所有的用户具有更新权限
+    }
+    ```
+
+
+
+### 权限字符串
+
+权限字符串的规则是：**资源标识符:操作:资源实例标识符**，意识是对哪个资源的哪个实例具有什么操作，":"是资源/操作/实例的分割符，权限字符串也可以使用`*`通配符
+
+例子：
+
+- 用户创建权限：`user:create`，或`user:create:*`
+- 用户修改实例001的权限：`user:update:001`
+- 用户实例001的所有权限：`user:*：001`
+
+
+
+### Shiro中授权编程实现方式
+
+- 编程式
+
+  ```java
+  Subject subject = SecurityUtils.getSubject();
+  if(subject.hasRole(“admin”)) {
+  	//有权限
+  } else {
+  	//无权限
+  }
+  ```
+
+  
+
+- 注解式
+
+  ```java
+  @RequiresRoles("admin")
+  public void hello() {
+  	//有权限
+  }
+  ```
+
+  
+
+- 标签式
+
+  ```jsp
+  JSP/GSP 标签：在JSP/GSP 页面通过相应的标签完成：
+  <shiro:hasRole name="admin">
+  	<!— 有权限—>
+  </shiro:hasRole>
+  注意: Thymeleaf 中使用shiro需要额外集成!
+  ```
+
+
+
+### 授权的开发
+
+#### 自定义Realm中的实现
+
+```java
+package com.demo.shiro;
+
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.subject.PrincipalCollection;
+
+/**
+ * 自定义Realm实现，将认证/授权数据的来源转为数据库
+ *
+ * @author jingLv
+ * @date 2020/09/27
+ */
+public class CustomerRealm extends AuthorizingRealm {
+    /**
+     * 授权
+     *
+     * @param principalCollection
+     * @return
+     */
+    @Override
+    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
+        String primaryPrincipal = (String) principalCollection.getPrimaryPrincipal();
+        System.out.println("身份信息：" + primaryPrincipal);
+
+        //根据身份信息 用户名 获取当前用户的角色信息，以及权限信息 admin user super
+        SimpleAuthorizationInfo simpleAuthorizationInfo = new SimpleAuthorizationInfo();
+
+        // 将数据库中查询角色信息赋值给权限对象
+        simpleAuthorizationInfo.addRole("admin");
+        simpleAuthorizationInfo.addRole("user");
+
+        // 将数据库中查询权限信息赋值给权限对象
+        simpleAuthorizationInfo.addStringPermission("user:*:01");
+        simpleAuthorizationInfo.addStringPermission("product:create");
+
+        return simpleAuthorizationInfo;
+    }
+
+    /**
+     * 认证
+     *
+     * @param authenticationToken
+     * @return
+     * @throws AuthenticationException
+     */
+    @Override
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
+        // 在token中获取用户名
+        String principal = (String) authenticationToken.getPrincipal();
+        // 根据身份信息使用jdbc mybatis查询相关数据库
+        if ("admin".equals(principal)) {
+            // 参数1：返回数据库中的正确的用户名
+            // 参数2：返回数据库中的正确的密码
+            // 参数3：提供当前realm的名字，使用this.getName()
+            return new SimpleAuthenticationInfo(principal, "admin", this.getName());
+        }
+        return null;
+    }
+}
+```
+
+
+
+#### 授权
+
+```java
+package com.demo.shiro;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.mgt.DefaultSecurityManager;
+import org.apache.shiro.subject.Subject;
+
+import java.util.Arrays;
+
+/**
+ * 使用自定义realm
+ *
+ * @author jingLv
+ * @date 2020/09/27
+ */
+public class TestAuthenticatorCustomerRealm {
+    public static void main(String[] args) {
+        // 创建SecurityManager
+        DefaultSecurityManager defaultSecurityManager = new DefaultSecurityManager();
+        //设置自定义realm
+        defaultSecurityManager.setRealm(new CustomerRealm());
+        //给安全工具类设置安全管理器
+        SecurityUtils.setSecurityManager(defaultSecurityManager);
+        //通过安全工具类获取subject
+        Subject subject = SecurityUtils.getSubject();
+        // 创建token
+        UsernamePasswordToken token = new UsernamePasswordToken("admin", "admin");
+
+        try {
+            subject.login(token);
+            System.out.println("登录成功--");
+        } catch (IncorrectCredentialsException e) {
+            e.printStackTrace();
+            System.out.println("密码错误！");
+        } catch (UnknownAccountException e) {
+            e.printStackTrace();
+            System.out.println("用户名错误！");
+        }
+
+
+        // 认证用户进行判断
+        if (subject.isAuthenticated()) {
+            // 基于角色的权限控制
+            boolean admin = subject.hasRole("admin");
+            System.out.println(admin);
+
+            // 基于多权限的角色控制
+            boolean all = subject.hasAllRoles(Arrays.asList("admin", "user"));
+            System.out.println(all);
+
+            // 是否具有其中一个角色
+            boolean[] booleans = subject.hasRoles(Arrays.asList("amdin", "super", "user"));
+            for (boolean aBoolean : booleans) {
+                System.out.println(aBoolean);
+            }
+
+            // 基于权限字符串的访问控制，资源标识符:操作:资源
+            System.out.println("权限：" + subject.isPermitted("user:*:01"));
+            System.out.println("权限：" + subject.isPermitted("product:create"));
+
+            // 分别具有哪些权限
+            boolean[] booleans1 = subject.isPermitted("user:*:01", "order:*:01");
+            for (boolean b : booleans1) {
+                System.out.println(b);
+            }
+
+            // 同时具有哪些权限
+            boolean permittedAll = subject.isPermittedAll("user:*:01", "product:create:01");
+            System.out.println(permittedAll);
+        }
+    }
+}
+```
+
+
+

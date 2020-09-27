@@ -43,5 +43,12 @@ public class TestAuthenticatorCustomerMD5Realm {
             e.printStackTrace();
             System.out.println("用户名错误！");
         }
+
+        // 认证用户进行判断 
+        if (subject.isAuthenticated()) {
+            // 基于角色的权限控制
+            boolean admin = subject.hasRole("admin");
+            System.out.println(admin);
+        }
     }
 }
