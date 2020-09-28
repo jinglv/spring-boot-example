@@ -103,5 +103,187 @@ mysql 、 mariadb 、 oracle 、 db2 、 h2 、 hsql 、 sqlite 、 postgresql �
 2. 创建数据库及表结构
 
    1. 表与mybatis的示例一致
+
    2. 开发实体类
+
+      ```java
+      package com.example.mybatis.plus.entity;
+      
+      import lombok.AllArgsConstructor;
+      import lombok.Data;
+      import lombok.NoArgsConstructor;
+      import lombok.ToString;
+      import lombok.experimental.Accessors;
+      
+      /**
+       * Accessors(chain = true) 开启链式调用
+       * <p>
+       * 注意：如果不加对应的注解，则实体的表名和字段必须要与表的名称和列名必须一致
+       *
+       * @author jingLv
+       * @date 2020/09/28
+       */
+      @Data
+      @AllArgsConstructor
+      @NoArgsConstructor
+      @ToString
+      @Accessors(chain = true)
+      public class User {
+          private Long id;
+          private String userName;
+          private String passWord;
+          private String gender;
+          private String nickName;
+      }
+      ```
+
+      
+
    3. 开发mapper通用实现
+
+      ```java
+      package com.example.mybatis.plus.dao;
+      
+      import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+      import com.example.mybatis.plus.entity.User;
+      
+      /**
+       * 使用MyBatis-Plus增强接口
+       *
+       * @author jingLv
+       * @date 2020/09/28
+       */
+      public interface UserDao extends BaseMapper<User> {
+      }
+      ```
+
+   4. 测试
+
+      ```java
+      package com.example.mybatis.plus.dao;
+      
+      import com.example.mybatis.plus.entity.User;
+      import org.junit.jupiter.api.Test;
+      import org.springframework.beans.factory.annotation.Autowired;
+      import org.springframework.boot.test.context.SpringBootTest;
+      
+      import java.util.List;
+      
+      /**
+       * @author jingLv
+       * @date 2020/09/28
+       */
+      @SpringBootTest
+      class UserDaoTest {
+          @Autowired
+          private UserDao userDao;
+      
+          @Test
+          void testFindAll() {
+              List<User> users = userDao.selectList(null);
+              users.forEach(System.out::println);
+              users.forEach(user -> System.out.println("user=" + user));
+          }
+      
+      }
+      ```
+
+      
+
+## 常用注解
+
+- **@TableName**  
+- **@TableId**
+- **@TableField**
+
+### @TableNam注解
+
+- **描述:**用来将实体对象与数据库表名完成映射
+- **修饰范围:** 用在类上
+- **常见属性:**
+  - **value:** String类型,指定映射的表名
+  - **resultMap:**String类型,用来指定XML配置中resultMap的id值
+
+
+
+### @TableId注解
+
+- **描述**：主键注解
+
+- **修饰范围:**用在属性上
+
+- **常见属性:**
+
+  - **value:** String类型,指定实体类中与表中对应的主键列名
+
+  - **type:**  枚举类型,指定主键生成类型
+
+    - IdType
+
+      | 值                | 描述                                                         |
+      | ----------------- | ------------------------------------------------------------ |
+      | AUTO              | 数据库ID自增                                                 |
+      | NONE              | 无状态，该类型为未设置主键类型（注解里等于跟随全局，全局里约等于INPUT） |
+      | INPUT             | insert前自行set主键值                                        |
+      | ASSIGN_ID         | 分配ID（主键为Number(Long和Integer)或String）(since3.3.0)，使用接口IdentifierGenerator的方法nextId（默认实现类为DefaultIdentifierGenerator雪花算法） |
+      | ASSIGN_UUID       | 分配UUID，主键类型为String(since3.3.0)，使用接口IdentifierGenerator的方法nextUUID（默认default方法） |
+      | ~~ID_WORKER~~     | 分布式全局唯一ID 长整型类型（please use ASSIGN_ID）          |
+      | ~~UUID~~          | 32位UUID字符串（please use ASSIGN_ID）                       |
+      | ~~ID_WORKER_STR~~ | 分布式全局唯一ID字符串类型（please use ASSIGN_ID）           |
+
+
+
+### @TableField
+
+- **描述**：字段注解(非主键)
+- **修饰范围:**用在属性上
+- **常用属性:**
+  - **value:**	String类型,用来指定对应的数据库表中的字段名
+  - **el:**	String类型,映射为原生 #{ ... } 逻辑,相当于写在 xml 里的 #{ ... } 部分，别名， 3.0不存在
+  - exist	boolean是否为数据库表字段 true代表是数据库字段,false代表不是
+
+```java
+package com.example.mybatis.plus.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.Accessors;
+
+/**
+ * Accessors(chain = true) 开启链式调用
+ * <p>
+ * 注意：如果不加对应的注解，则实体的表名和字段必须要与表的名称和列名必须一致
+ * <p>
+ * 默认将类名作为表名
+ *
+ * @author jingLv
+ * @date 2020/09/28
+ */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@ToString
+@Accessors(chain = true)
+@TableName("users")
+public class User {
+    @TableId(value = "id", type = IdType.AUTO)
+    private Long id;
+    @TableField("user_name")
+    private String userName;
+    @TableField("pass_word")
+    private String passWord;
+    private String gender;
+    @TableField("nick_name")
+    private String nickName;
+
+    @TableField(exist = false)
+    private String description;
+}
+```
+
