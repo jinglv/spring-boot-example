@@ -27,16 +27,43 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @TableName("users")
 public class User {
+    /**
+     * 主键
+     */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
+    /**
+     * 工号
+     */
+    @TableField("job_id")
+    private Long jobId;
+    /**
+     * 用户名
+     */
     @TableField("user_name")
     private String userName;
+    /**
+     * 用户密码
+     */
     @TableField("pass_word")
     private String passWord;
-    private String gender;
-    @TableField("nick_name")
-    private String nickName;
+    /**
+     * 用户年龄
+     */
+    private Integer age;
+    /**
+     * 用户邮箱
+     */
+    private String email;
+    /**
+     * 直属上级ID（上级工号）
+     */
+    @TableField("manager_id")
+    private Long managerId;
 
+    /**
+     * 说明
+     */
     @TableField(exist = false)
     private String description;
 }

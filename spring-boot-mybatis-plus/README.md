@@ -102,16 +102,45 @@ mysql 、 mariadb 、 oracle 、 db2 、 h2 、 hsql 、 sqlite 、 postgresql �
 
 2. 创建数据库及表结构
 
-   1. 表与mybatis的示例一致
+   1. 数据表结构
 
-   2. 开发实体类
-
-      ```java
-      package com.example.mybatis.plus.entity;
+      ```sql
+   -- 创建user表
+      DROP TABLE IF EXISTS users;
+      CREATE TABLE users
+      (
+          id          BIGINT UNSIGNED AUTO_INCREMENT COMMENT '主键' PRIMARY KEY,
+          job_id      BIGINT      DEFAULT NULL COMMENT '工作id',
+          user_name   VARCHAR(32) DEFAULT NULL COMMENT '用户名',
+          pass_word   VARCHAR(32) DEFAULT NULL COMMENT '密码',
+          age         INT(11)     DEFAULT NULL COMMENT '年龄',
+          email       VARCHAR(50) DEFAULT NULL COMMENT '邮箱',
+          manager_id  BIGINT(20)  DEFAULT NULL COMMENT '直属上级id',
+          create_time DATETIME    DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
+          update_time TIMESTAMP   DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+      ) ENGINE = InnoDB
+        AUTO_INCREMENT = 1
+        DEFAULT CHARSET = utf8 COMMENT '用户表';
       
-      import lombok.AllArgsConstructor;
+      -- 数据初始化
+      INSERT INTO users (job_id, user_name, pass_word, age, email, manager_id)
+      VALUES (1000101, '大Boss', 'admin', 40, 'boss@baomidou.com', NULL),
+             (1000102, '王天风', '123456', 25, 'wtf@baomidou.com', 1000101),
+             (1000103, '李艺伟', '123123', 28, 'lyw@baomidou.com', 1000102),
+             (1000104, '张雨琪', '123123', 31, 'zjq@baomidou.com', 1000102),
+             (1000105, '刘红雨', '123123', 32, 'lhm@baomidou.com', 1000102);
+      ```
+   
+      
+   
+   2. 开发实体类
+   
+      ```java
+   package com.example.mybatis.plus.entity;
+      
+   import lombok.AllArgsConstructor;
       import lombok.Data;
-      import lombok.NoArgsConstructor;
+   import lombok.NoArgsConstructor;
       import lombok.ToString;
       import lombok.experimental.Accessors;
       
@@ -127,20 +156,22 @@ mysql 、 mariadb 、 oracle 、 db2 、 h2 、 hsql 、 sqlite 、 postgresql �
       @AllArgsConstructor
       @NoArgsConstructor
       @ToString
-      @Accessors(chain = true)
+   @Accessors(chain = true)
       public class User {
-          private Long id;
+       private Long id;
+          private Long jobId;
           private String userName;
           private String passWord;
-          private String gender;
-          private String nickName;
+          private Integer age;
+          private String email;
+          private Long managerId;
       }
       ```
-
+   
       
-
+   
    3. 开发mapper通用实现
-
+   
       ```java
       package com.example.mybatis.plus.dao;
       
@@ -158,7 +189,7 @@ mysql 、 mariadb 、 oracle 、 db2 、 h2 、 hsql 、 sqlite 、 postgresql �
       ```
 
    4. 测试
-
+   
       ```java
       package com.example.mybatis.plus.dao;
       
@@ -187,7 +218,7 @@ mysql 、 mariadb 、 oracle 、 db2 、 h2 、 hsql 、 sqlite 、 postgresql �
       
       }
       ```
-
+   
       
 
 ## 常用注解
@@ -274,16 +305,271 @@ import lombok.experimental.Accessors;
 public class User {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
+    @TableField("job_id")
+    private Long jobId;
     @TableField("user_name")
     private String userName;
     @TableField("pass_word")
     private String passWord;
-    private String gender;
-    @TableField("nick_name")
-    private String nickName;
+    private Integer age;
+    private String email;
+    @TableField("manager_id")
+    private Long managerId;
 
     @TableField(exist = false)
     private String description;
 }
+
 ```
+
+## 常用方法
+### 查询方法
+
+1. 基本查询
+
+   - selectById：根据ID查询
+
+     ```
+     @Test
+     void testFindOne() {
+       User user = userDao.selectById(2);
+       System.out.println(user);
+     }
+     ```
+
+     
+
+   - selectBatchIds：根据ID批量查询
+
+     ```
+     @Test
+     void testFindIds() {
+       List<Integer> ids = Arrays.asList(1, 2, 3);
+       List<User> users = userDao.selectBatchIds(ids);
+       users.forEach(System.out::println);
+     }
+     ```
+
+   - selectByMap：根据columnMap(列名)的条件
+
+     ```
+     @Test
+     void testFindByMap() {
+       Map<String, Object> columnMap = new HashMap<>();
+       // key是数据库中的列名，不是User实体类的名称
+       columnMap.put("user_name", "王天风");
+       columnMap.put("age", 25);
+       List<User> users = userDao.selectByMap(columnMap);
+       users.forEach(System.out::println);
+     }
+     ```
+
+     
+
+2. 条件构造器查询
+
+   1. 查询条件构造的两种方式
+      - QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+      - QueryWrapper<User> queryWrapper = Wrappers.query();
+
+   - selectList：根据实体类条件，查询全部记录
+
+     - 注意：传入的queryWrapper为null，则查询所有数据
+
+     ```
+      /**
+      * 查询所有数据
+      */
+      @Test
+      void testQueryAll() {
+        List<User> users = userDao.selectList(null);
+        users.forEach(user -> System.out.println("users=" + user));
+      }
+      
+      /**
+      * 名字中包含雨并且年龄小于40
+      * user_name like '%雨%' and age<40
+      */
+      @Test
+      void testQueryOne() {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        // 构造条件
+        queryWrapper.like("user_name", "雨").lt("age", 40);
+        List<User> users = userDao.selectList(queryWrapper);
+        users.forEach(user -> System.out.println("users=" + user));
+      }
+      
+      /**
+      * 名字中包含雨年并且龄大于等于20且小于等于40并且email不为空
+      * user_name like '%雨%' and age between 20 and 40 and email is not null
+      */
+      @Test
+      void testQueryTwo() {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        // 构造条件
+        queryWrapper.like("user_name", "雨").between("age", 20, 40).isNotNull("email");
+        List<User> users = userDao.selectList(queryWrapper);
+        users.forEach(user -> System.out.println("users=" + user));
+      }
+      
+      /**
+      * 名字为王姓或者年龄大于等于25，按照年龄降序排列，年龄相同按照id升序排列
+      * user_name like '王%' or age>=25 order by age desc,id asc
+      */
+      @Test
+      void testQueryThree() {
+      QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+      // 构造条件
+      queryWrapper.likeRight("user_name", "王").or().ge("age", 25).orderByDesc("age").orderByAsc("id");
+      List<User> users = userDao.selectList(queryWrapper);
+      users.forEach(user -> System.out.println("users=" + user));
+      }
+      
+      /**
+      * 创建日期为2019年2月14日并且直属上级为名字为王姓
+      * date_format(create_time,'%Y-%m-%d')='2020-09-29' and manager_id in (select job_id from users where user_name like '王%')
+      * date_format(create_time,'%Y-%m-%d')='2020-09-29') 这种方式容易造成SQL注入
+      */
+      @Test
+      void testQueryFour() {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        // 构造条件
+        queryWrapper.apply("date_format(create_time,'%Y-%m-%d')={0}", "2020-09-29")
+        			.inSql("manager_id", "select job_id from users where user_name like '王%'");
+        List<User> users = userDao.selectList(queryWrapper);
+        users.forEach(user -> System.out.println("users=" + user));
+      }
+      
+      /**
+      * 名字为王姓或者（年龄小于40并且年龄大于20并且邮箱不为空）
+      * user_name like '王%' or (age<40 and age>20 and email is not null)
+      */
+      @Test
+      void testQuerySix() {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        // 构造条件
+        queryWrapper.likeRight("user_name", "王").or(wq -> wq.lt("age", 40).gt("age", 20).isNotNull("email"));
+        List<User> users = userDao.selectList(queryWrapper);
+        users.forEach(user -> System.out.println("users=" + user));
+      }
+      
+      /**
+      * 名字为王姓或者（年龄小于40并且年龄大于20并且邮箱不为空）
+      * user_name like '王%' or (age<40 and age>20 and email is not null)
+      * and优先级高于or
+      */
+      @Test
+      void testQuerySeven() {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        // 构造条件
+        queryWrapper.nested(wq -> wq.lt("age", 40).or().isNotNull("email"))
+        			.likeRight("user_name", "王");
+        List<User> users = userDao.selectList(queryWrapper);
+        users.forEach(user -> System.out.println("users=" + user));
+     }
+     
+     /**
+     * 年龄为30、31、34、35
+     * age in (30、31、34、35)
+     */
+     @Test
+     void testQueryEight() {
+       QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+       // 构造条件
+       queryWrapper.in("age", Arrays.asList(30, 31, 34, 35));
+       List<User> users = userDao.selectList(queryWrapper);
+       users.forEach(user -> System.out.println("users=" + user));
+     }
+     
+     /**
+     * 只返回满足条件的其中一条语句即可
+     * limit 1
+     * <p>
+     * last:无视优化规则直接拼接到sql的最后
+     * 注意事项：只能调用一次，多次调用以最后一次为准，有sql注入的风险，请谨慎使用
+     */
+     @Test
+     void testQueryNine() {
+       QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+       // 构造条件
+       queryWrapper.in("age", Arrays.asList(30, 31, 34, 35)).last("limit 1");
+       List<User> users = userDao.selectList(queryWrapper);
+       users.forEach(user -> System.out.println("users=" + user));
+     }
+     ```
+
+3. SELECT不列出全部字段
+
+   - queryWrapper.select("column1", "column2")....
+
+   ```
+   /**
+   * 名字中包含雨并且年龄小于40
+   * select job_id,user_name from users where user_name like '%雨%' and age<40
+   */
+   @Test
+   void testQueryFieldOne() {
+     QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+     // 构造条件
+     queryWrapper.select("job_id", "user_name").like("user_name", "雨").lt("age", 40);
+     List<User> users = userDao.selectList(queryWrapper);
+     users.forEach(user -> System.out.println("users=" + user));
+   }
+   
+   /**
+   * 名字中包含雨并且年龄小于40
+   * select id,user_name,pass_word, age,email from users where user_name like '%雨%' and age<40
+   * 字段较多的情况,直接传实体
+   * select可以写在语句的后面
+   */
+   @Test
+   void testQueryFieldTwo() {
+     QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+     // 构造条件
+     queryWrapper.like("user_name", "雨").lt("age", 40)
+     .select(User.class, info -> !info.getColumn().equals("manager_id") &&
+     !info.getColumn().equals("job_id"));
+     List<User> users = userDao.selectList(queryWrapper);
+     users.forEach(user -> System.out.println("users=" + user));
+   }
+   ```
+
+   
+
+4. 条件构造器中condition作用
+
+   - condition执行条件:控制条件是否加入到查询条件中
+
+     ```
+     public void condition(String userName, String email) {
+       QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+       // 这种写法不简洁
+       /*if (StringUtils.isNotBlank(userName)) {
+       queryWrapper.like("user_name", userName);
+       }
+       if (StringUtils.isNotBlank(email)) {
+       queryWrapper.like("email", email);
+       }*/
+       // 优化写法
+       queryWrapper.like(StringUtils.isNotBlank(userName), "user_name", userName)
+       .like(StringUtils.isNotBlank(email), "email", email);
+     
+       List<User> users = userDao.selectList(queryWrapper);
+       users.forEach(user -> System.out.println("users=" + user));
+     }
+     
+     @Test
+     void testCondition() {
+       // 模拟前台传来两个参数
+       String name = "王";
+       String email = "";
+       condition(name, email);
+     }
+     ```
+
+     
+
+### 新增方法
+### 更新方法
+### 删除方法
 
