@@ -12,6 +12,7 @@
         <module name="spring-boot-shiro" />
         <module name="spring-boot-maven" />
         <module name="spring-boot-banner" />
+        <module name="spring-boot-jwt" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -21,6 +22,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="spring-boot-banner" options="-parameters" />
+      <module name="spring-boot-jwt" options="-parameters" />
       <module name="spring-boot-maven" options="-parameters" />
       <module name="spring-boot-mybatis" options="-parameters" />
       <module name="spring-boot-mybatis-plus" options="-parameters" />
