@@ -304,3 +304,524 @@ public class JWTUtils {
 }
 ```
 
+## 整合SpringBoot
+
+1. 搭建环境：SpringBoot+MyBatis+JWT
+
+   - 引入依赖
+
+     ```xml
+     <!--JWT-->
+     <!-- https://mvnrepository.com/artifact/com.auth0/java-jwt -->
+     <dependency>
+       <groupId>com.auth0</groupId>
+       <artifactId>java-jwt</artifactId>
+       <version>${jwt.version}</version>
+     </dependency>
+     
+     <!--MyBatis-->
+     <dependency>
+       <groupId>org.mybatis.spring.boot</groupId>
+       <artifactId>mybatis-spring-boot-starter</artifactId>
+       <version>${mybatis.version}</version>
+     </dependency>
+     
+     <!--Druid-->
+     <dependency>
+       <groupId>com.alibaba</groupId>
+       <artifactId>druid</artifactId>
+       <version>${druid.version}</version>
+     </dependency>
+     
+     <!--MySQL-->
+     <dependency>
+       <groupId>mysql</groupId>
+       <artifactId>mysql-connector-java</artifactId>
+       <version>${mysql.version}</version>
+     </dependency>
+     
+     <!--lombok-->
+     <dependency>
+       <groupId>org.projectlombok</groupId>
+       <artifactId>lombok</artifactId>
+       <version>${lomboke.version}</version>
+     </dependency>
+     ```
+
+     
+
+   - 编写配置
+
+     ```properties
+     server.port=8989
+     spring.application.name=jwt
+     # 数据库配置
+     spring.datasource.type=com.alibaba.druid.pool.DruidDataSource
+     spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+     spring.datasource.url=jdbc:mysql://localhost:3306/test?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=true
+     spring.datasource.username=root
+     spring.datasource.password=123123
+     # mybatis配置
+     mybatis.type-aliases-package=com.example.jwt.entity
+     mybatis.mapper-locations=classpath:mybatis/mapper/*.xml
+     mybatis.config-location=classpath:mybatis/mybatis-config.xml
+     # 日志等级
+     logging.level.com.example.jwt.dao=debug
+     ```
+
+     
+
+2. 数据库建库建表
+
+   ```sql
+   -- 用户表
+   DROP TABLE IF EXISTS `user`;
+   CREATE TABLE `user`
+   (
+       `id`        int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
+       `user_name` varchar(80) DEFAULT NULL COMMENT '用户名',
+       `pass_word` varchar(40) DEFAULT NULL COMMENT '用户密码',
+       PRIMARY KEY (`id`)
+   ) ENGINE = InnoDB
+     AUTO_INCREMENT = 2
+     DEFAULT CHARSET = utf8;
+   
+   -- 初始化数据
+   INSERT INTO `user`(`user_name`, `pass_word`)
+   VALUES ('admin', 'admin'),
+          ('manager', '123456');s
+   ```
+
+   
+
+3. 开发entity数据表实例
+
+   ```java
+   package com.example.jwt.entity;
+   
+   import lombok.Data;
+   import lombok.experimental.Accessors;
+   
+   /**
+    * @author jingLv
+    * @date 2020/09/30
+    */
+   @Data
+   @Accessors(chain = true)
+   public class User {
+       /**
+        * 主键id
+        */
+       private String id;
+       /**
+        * 用户名
+        */
+       private String userName;
+       /**
+        * 密码
+        */
+       private String passWord;
+   }
+   ```
+
+   
+
+4. 开发DAO接口和mapper.xml
+
+   UserDao.java
+
+   ```java
+   package com.example.jwt.dao;
+   
+   import com.example.jwt.entity.User;
+   
+   /**
+    * @author jingLv
+    * @date 2020/09/30
+    */
+   public interface UserDao {
+       /**
+        * 登录
+        *
+        * @param user 用户信息
+        * @return 登录结果
+        */
+       User login(User user);
+   }
+   ```
+
+   UserMapper.xml
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8" ?>
+   <!DOCTYPE mapper
+           PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+           "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+   <mapper namespace="com.example.jwt.dao.UserDAO">
+   
+       <resultMap id="BaseResultMap" type="com.example.jwt.entity.User">
+           <id column="id" property="id" jdbcType="VARCHAR"/>
+           <result column="user_name" property="userName" jdbcType="VARCHAR"/>
+           <result column="pass_word" property="passWord" jdbcType="VARCHAR"/>
+       </resultMap>
+   
+       <select id="login" parameterType="User" resultMap="BaseResultMap">
+           SELECT *
+           FROM `user`
+           WHERE `user_name` = #{userName}
+             AND `pass_word` = #{passWord}
+       </select>
+   </mapper>
+   ```
+
+   
+
+5. 开发service接口及实现类
+
+   UserSerivce.java
+
+   ```java
+   package com.example.jwt.service;
+   
+   import com.example.jwt.entity.User;
+   
+   /**
+    * @author jingLv
+    * @date 2020/09/30
+    */
+   public interface UserService {
+       /**
+        * 登录接口
+        *
+        * @param user 用户信息
+        * @return 返回登录结果
+        */
+       User login(User user);
+   }
+   ```
+
+   
+
+   UserSerivceImpl.java
+
+   ```java
+   package com.example.jwt.service.Impl;
+   
+   import com.example.jwt.dao.UserDAO;
+   import com.example.jwt.entity.User;
+   import com.example.jwt.service.UserService;
+   import org.springframework.stereotype.Service;
+   import org.springframework.transaction.annotation.Propagation;
+   import org.springframework.transaction.annotation.Transactional;
+   
+   /**
+    * @author jingLv
+    * @date 2020/09/30
+    */
+   @Service
+   @Transactional
+   public class UserServiceImpl implements UserService {
+   
+       private final UserDAO userDao;
+   
+       public UserServiceImpl(UserDAO userDao) {
+           this.userDao = userDao;
+       }
+   
+       @Override
+       @Transactional(propagation = Propagation.SUPPORTS)
+       public User login(User user) {
+           // 根据接收用户名和密码查询数据库
+           User userDB = userDao.login(user);
+           if (userDB != null) {
+               return userDB;
+           }
+           throw new RuntimeException("登录失败--");
+       }
+   }
+   ```
+
+   
+
+6. 开发Controller
+
+   ```java
+   package com.example.jwt.controller;
+   
+   import com.auth0.jwt.exceptions.AlgorithmMismatchException;
+   import com.auth0.jwt.exceptions.SignatureVerificationException;
+   import com.auth0.jwt.exceptions.TokenExpiredException;
+   import com.example.jwt.entity.User;
+   import com.example.jwt.service.UserService;
+   import com.example.jwt.utils.JWTUtils;
+   import lombok.extern.slf4j.Slf4j;
+   import org.springframework.web.bind.annotation.GetMapping;
+   import org.springframework.web.bind.annotation.PostMapping;
+   import org.springframework.web.bind.annotation.RestController;
+   
+   import java.util.HashMap;
+   import java.util.Map;
+   
+   /**
+    * @author jingLv
+    * @date 2020/09/30
+    */
+   @RestController
+   @Slf4j
+   public class UserController {
+   
+       private final UserService userService;
+   
+       public UserController(UserService userService) {
+           this.userService = userService;
+       }
+   
+       @GetMapping("/user/login")
+       public Map<String, Object> login(User user) {
+           log.info("用户名：{}", user.getUserName());
+           log.info("密码：{}", user.getPassWord());
+   
+           Map<String, Object> result = new HashMap<>();
+           try {
+               User userDB = userService.login(user);
+               Map<String, String> payload = new HashMap<>();
+               payload.put("id", userDB.getId());
+               payload.put("userName", userDB.getUserName());
+               // 生成JWT令牌
+               String token = JWTUtils.getToken(payload);
+               result.put("state", true);
+               result.put("message", "登录成功!!!");
+               result.put("token", token);
+           } catch (Exception e) {
+               e.printStackTrace();
+               result.put("state", false);
+               result.put("message", e.getMessage());
+           }
+           return result;
+       }
+   
+       @PostMapping("/user/test")
+       public Map<String, Object> test(String token) {
+           log.info("当前token为：{}", token);
+   
+           Map<String, Object> result = new HashMap<>();
+           try {
+               // 验证token有效性
+               JWTUtils.verify(token);
+               result.put("msg", "验证通过!!!");
+               result.put("state", true);
+           } catch (TokenExpiredException e) {
+               result.put("state", false);
+               result.put("msg", "token已经过期!!!");
+           } catch (SignatureVerificationException e) {
+               result.put("state", false);
+               result.put("msg", "签名错误!!!");
+           } catch (AlgorithmMismatchException e) {
+               result.put("state", false);
+               result.put("msg", "加密算法不匹配!!!");
+           } catch (Exception e) {
+               e.printStackTrace();
+               result.put("state", false);
+               result.put("msg", "无效token!!!");
+           }
+           return result;
+       }
+   }
+   ```
+
+7. POSTMAN请求接口验证
+
+   ![image-20200930114115770](https://gitee.com/JeanLv/study_image/raw/master///image-20200930114115770.png)
+
+   ![image-20200930114228097](https://gitee.com/JeanLv/study_image/raw/master///image-20200930114228097.png)
+
+   ![](https://gitee.com/JeanLv/study_image/raw/master///image-20200930114300067-20200930114344898-20200930114347995.png)
+
+
+
+### 代码优化
+
+- 从上面的代码来看，每个接口都要传递token数据，每个方法都需要验证token代码冗余，不够灵活。需要优化！
+- Java Web项目放在拦截器中
+- Spring Cloud分布式则放到网关中
+
+
+
+拦截器优化
+
+官方建议是将token放到请求头（header）中
+
+1. 开发JWT的拦截器
+
+   - 新件包：interceptors，创建java文件：JWTInterceptor.java
+
+   ```java
+   package com.example.jwt.interceptors;
+   
+   import com.auth0.jwt.exceptions.AlgorithmMismatchException;
+   import com.auth0.jwt.exceptions.SignatureVerificationException;
+   import com.auth0.jwt.exceptions.TokenExpiredException;
+   import com.example.jwt.utils.JWTUtils;
+   import com.fasterxml.jackson.databind.ObjectMapper;
+   import org.springframework.web.servlet.HandlerInterceptor;
+   
+   import javax.servlet.http.HttpServletRequest;
+   import javax.servlet.http.HttpServletResponse;
+   import java.util.HashMap;
+   import java.util.Map;
+   
+   /**
+    * 拦截器
+    *
+    * @author jingLv
+    * @date 2020/09/30
+    */
+   public class JWTInterceptor implements HandlerInterceptor {
+       @Override
+       public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+           // 获取请求头中的令牌
+           String token = request.getHeader("token");
+           Map<String, Object> map = new HashMap<>();
+           try {
+               // 验证token有效性
+               JWTUtils.verify(token);
+               //放行请求
+               return true;
+           } catch (TokenExpiredException e) {
+               e.printStackTrace();
+               map.put("msg", "token已经过期!!!");
+           } catch (SignatureVerificationException e) {
+               e.printStackTrace();
+               map.put("msg", "签名错误!!!");
+           } catch (AlgorithmMismatchException e) {
+               e.printStackTrace();
+               map.put("msg", "加密算法不匹配!!!");
+           } catch (Exception e) {
+               e.printStackTrace();
+               map.put("msg", "无效token!!!");
+           }
+           // 设置状态
+           map.put("state", false);
+   
+           // 将Map转为json，集成了jackson，直接使用
+           String json = new ObjectMapper().writeValueAsString(map);
+           response.setContentType("application/json;charset=UTF-8");
+           response.getWriter().println(json);
+           return false;
+       }
+   }
+   ```
+
+   
+
+2. 配置拦截器
+
+   - 新件包：config，创建java文件：InterceptorConfig.java
+
+   ```java
+   package com.example.jwt.config;
+   
+   import com.example.jwt.interceptors.JWTInterceptor;
+   import org.springframework.context.annotation.Configuration;
+   import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+   import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+   
+   /**
+    * @author jingLv
+    * @date 2020/09/30
+    */
+   @Configuration
+   public class InterceptorConfig implements WebMvcConfigurer {
+       @Override
+       public void addInterceptors(InterceptorRegistry registry) {
+           registry.addInterceptor(new JWTInterceptor()).
+                   // 接口需要token验证
+                           addPathPatterns("/user/test").
+                   // 接口不需要token验证
+                           excludePathPatterns("/user/login");
+       }
+   }
+   ```
+
+   
+
+3. 修改Controller
+
+   UserController.java
+
+   ```java
+   package com.example.jwt.controller;
+   
+   import com.auth0.jwt.interfaces.DecodedJWT;
+   import com.example.jwt.entity.User;
+   import com.example.jwt.service.UserService;
+   import com.example.jwt.utils.JWTUtils;
+   import lombok.extern.slf4j.Slf4j;
+   import org.springframework.web.bind.annotation.GetMapping;
+   import org.springframework.web.bind.annotation.PostMapping;
+   import org.springframework.web.bind.annotation.RestController;
+   
+   import javax.servlet.http.HttpServletRequest;
+   import java.util.HashMap;
+   import java.util.Map;
+   
+   /**
+    * @author jingLv
+    * @date 2020/09/30
+    */
+   @RestController
+   @Slf4j
+   public class UserController {
+   
+       private final UserService userService;
+   
+       public UserController(UserService userService) {
+           this.userService = userService;
+       }
+   
+       @GetMapping("/user/login")
+       public Map<String, Object> login(User user) {
+           log.info("用户名：{}", user.getUserName());
+           log.info("密码：{}", user.getPassWord());
+   
+           Map<String, Object> result = new HashMap<>();
+           try {
+               User userDB = userService.login(user);
+               Map<String, String> payload = new HashMap<>();
+               payload.put("id", userDB.getId());
+               payload.put("userName", userDB.getUserName());
+               // 生成JWT令牌
+               String token = JWTUtils.getToken(payload);
+               result.put("state", true);
+               result.put("message", "登录成功!!!");
+               result.put("token", token);
+           } catch (Exception e) {
+               e.printStackTrace();
+               result.put("state", false);
+               result.put("message", e.getMessage());
+           }
+           return result;
+       }
+   
+       @PostMapping("/user/test")
+       public Map<String, Object> test(HttpServletRequest request) {
+           // 处理自己的业务逻辑
+           Map<String, Object> result = new HashMap<>();
+           result.put("msg", "请求成功!!!");
+           result.put("state", true);
+           // 获取认证信息
+           String token = request.getHeader("token");
+           DecodedJWT verify = JWTUtils.verify(token);
+           log.info("用户Id：{}", verify.getClaim("id").asString());
+           log.info("用户名：{}", verify.getClaim("userName").asString());
+           return result;
+       }
+   }
+   ```
+
+4. 程序启动后，POSTMAN请求接口
+
+   ![image-20200930121224983](https://gitee.com/JeanLv/study_image/raw/master///image-20200930121224983.png)
+
+
+

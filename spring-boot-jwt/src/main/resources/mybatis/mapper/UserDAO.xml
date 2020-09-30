@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.jwt.dao.UserDAO">
+
+    <resultMap id="BaseResultMap" type="com.example.jwt.entity.User">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="user_name" property="userName" jdbcType="VARCHAR"/>
+        <result column="pass_word" property="passWord" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="login" parameterType="User" resultMap="BaseResultMap">
+        SELECT *
+        FROM `user`
+        WHERE `user_name` = #{userName}
+          AND `pass_word` = #{passWord}
+    </select>
+</mapper>
