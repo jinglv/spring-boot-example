@@ -50,6 +50,7 @@ public class User {
     /**
      * 用户年龄
      */
+    @TableField(condition = "%s&lt;#{%s}")
     private Integer age;
     /**
      * 用户邮箱

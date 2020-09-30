@@ -1,6 +1,12 @@
 package com.example.mybatis.plus.dao;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.example.mybatis.plus.entity.User;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.util.StringUtils;
@@ -232,4 +238,231 @@ class UserDaoTest {
         String email = "";
         condition(name, email);
     }
+
+    @Test
+    void testWrapperEntity() {
+        // 实体赋值
+        User whereUser = new User();
+        whereUser.setUserName("刘红雨");
+        whereUser.setAge(32);
+        QueryWrapper<User> queryWrapper = new QueryWrapper<User>(whereUser);
+        // 实体赋值和Wrapper条件构造是互不影响的，如果同时存在则，会同时作为条件进行查询
+        queryWrapper.like("user_name", "雨").lt("age", 40);
+        List<User> users = userDao.selectList(queryWrapper);
+        users.forEach(user -> System.out.println("users=" + user));
+    }
+
+    @Test
+    void testAllEq() {
+        // Map对象
+        Map<String, Object> params = new HashMap<>();
+        params.put("user_name", "王天风");
+        params.put("age", "25");
+        //params.put("age", null); // 如果字段设置为null的话，则在执行查询的语句会将该列的查询条件为 IS NULL
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        // 调用allEq
+        // queryWrapper.allEq(params);
+        // queryWrapper.allEq(params, false); // 设置为false会将字段为NUll的忽略掉
+        queryWrapper.allEq((k, v) -> !k.equals("user_name"), params); // 将user_name不等于王天风的过滤掉，在查询是忽略该列
+        List<User> users = userDao.selectList(queryWrapper);
+        users.forEach(user -> System.out.println("users=" + user));
+    }
+
+    @Test
+    void testQueryMaps() {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        // 构造条件
+        queryWrapper.like("user_name", "雨").lt("age", 40);
+        List<Map<String, Object>> users = userDao.selectMaps(queryWrapper);
+        users.forEach(user -> System.out.println("users=" + user));
+    }
+
+    /**
+     * 按照直属上级分组，查询每组的平均年龄、最大年龄、最小年龄。
+     * 并且只取年龄总和小于500的组。
+     * <p>
+     * select avg(age) avg_age,min(age) min_age,max(age) max_age
+     * from user
+     * group by manager_id
+     * having sum(age) <500
+     */
+    @Test
+    void testQueryMapsHaving() {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        // 构造条件
+        queryWrapper.select("avg(age) avg_age", "min(age) min_age", "max(age) max_age").groupBy("manager_id").having("sum(age)<{0}", 500);
+        List<Map<String, Object>> users = userDao.selectMaps(queryWrapper);
+        users.forEach(user -> System.out.println("users=" + user));
+    }
+
+    @Test
+    void testQueryObjs() {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        // 构造条件
+        queryWrapper.like("user_name", "雨").lt("age", 40);
+        List<Object> users = userDao.selectObjs(queryWrapper);
+        users.forEach(user -> System.out.println("users=" + user));
+    }
+
+    @Test
+    void testQueryCount() {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        // 构造条件
+        queryWrapper.like("user_name", "雨").lt("age", 40);
+        Integer count = userDao.selectCount(queryWrapper);
+        System.out.println("总记录数：" + count);
+    }
+
+    @Test
+    void testQuerySelectOne() {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        // 构造条件
+        queryWrapper.like("user_name", "刘红雨").lt("age", 40);
+        User user = userDao.selectOne(queryWrapper);
+        System.out.println(user.toString());
+    }
+
+    @Test
+    void testQueryLambdaOne() {
+        LambdaQueryWrapper<User> lambdaQueryWrapper = Wrappers.<User>lambdaQuery();
+        // where user_name like '%雨%'
+        lambdaQueryWrapper.like(User::getUserName, "雨").lt(User::getAge, 40);
+        List<User> users = userDao.selectList(lambdaQueryWrapper);
+        users.forEach(System.out::println);
+    }
+
+    /**
+     * 名字为王姓并且（年龄小于40或邮箱不为空）
+     * user_name like '王%' and (age<40 or email is not null)
+     */
+    @Test
+    void testQueryLambdaTwo() {
+        LambdaQueryWrapper<User> lambdaQueryWrapper = Wrappers.<User>lambdaQuery();
+        lambdaQueryWrapper.likeRight(User::getUserName, "王").and(lqw -> lqw.lt(User::getAge, 40).or().isNotNull(User::getEmail));
+        List<User> users = userDao.selectList(lambdaQueryWrapper);
+        users.forEach(System.out::println);
+    }
+
+    @Test
+    void testQueryLambdaThree() {
+        List<User> users = new LambdaQueryChainWrapper<User>(userDao).like(User::getUserName, "雨").ge(User::getAge, 20).list();
+        users.forEach(System.out::println);
+    }
+
+    @Test
+    void testSave() {
+        User user = new User();
+        user.setAge(23).setUserName("王二浪").setJobId(1000106L).setPassWord("123456").setEmail("wel@baomidou.com");
+        int insert = userDao.insert(user);
+        System.out.println(insert);
+    }
+
+    /**
+     * 根据Id更新
+     */
+    @Test
+    void testUpdateById() {
+        User user = new User();
+        user.setId(2L);
+        user.setAge(26);
+        user.setEmail("wtf2@baomidou.com");
+        int i = userDao.updateById(user);
+        System.out.println("影响记录数：" + i);
+    }
+
+    /**
+     * 以条件构造器作为参数的更新方法
+     */
+    @Test
+    void testUpdateByWrapperOne() {
+        UpdateWrapper<User> userUpdateWrapper = new UpdateWrapper<>();
+        userUpdateWrapper.eq("user_name", "李艺伟").eq("age", 28);
+
+        User user = new User();
+        user.setEmail("lyw2020@baomidou.com");
+        user.setAge(29);
+
+        int update = userDao.update(user, userUpdateWrapper);
+        System.out.println("影响记录数：" + update);
+    }
+
+    @Test
+    void testUpdateByWrapperTwo() {
+        User whereUser = new User();
+        whereUser.setUserName("李艺伟");
+
+        UpdateWrapper<User> userUpdateWrapper = new UpdateWrapper<User>(whereUser);
+        // userUpdateWrapper.eq("user_name", "李艺伟").eq("age", 28); // 搜索条件会重复
+
+        User user = new User();
+        user.setEmail("lyw2020@baomidou.com");
+        user.setAge(29);
+
+        int update = userDao.update(user, userUpdateWrapper);
+        System.out.println("影响记录数：" + update);
+    }
+
+    @Test
+    void testUpdateByWrapperSet() {
+        UpdateWrapper<User> userUpdateWrapper = new UpdateWrapper<>();
+        userUpdateWrapper.eq("user_name", "李艺伟").eq("age", 29).set("age", 30);
+
+        int update = userDao.update(null, userUpdateWrapper);
+        System.out.println("影响记录数：" + update);
+    }
+
+    @Test
+    void testUpdateByWrapperLambda() {
+        LambdaUpdateWrapper<User> userLambdaUpdateWrapper = Wrappers.<User>lambdaUpdate();
+        userLambdaUpdateWrapper.eq(User::getUserName, "王二浪").eq(User::getAge, 23).set(User::getAge, 24);
+
+        int update = userDao.update(null, userLambdaUpdateWrapper);
+        System.out.println("影响记录数：" + update);
+    }
+
+    /**
+     * 链式调用
+     */
+    @Test
+    void testUpdateByWrapperChain() {
+        boolean b = new LambdaUpdateChainWrapper<User>(userDao)
+                .eq(User::getUserName, "王二浪").eq(User::getAge, 24).set(User::getAge, 25).update();
+        System.out.println(b);
+    }
+
+    /**
+     * 根据Id删除
+     */
+    @Test
+    void testDeleteById() {
+        int i = userDao.deleteById(6L);
+        System.out.println("影响记录数：" + i);
+    }
+
+    @Test
+    void testDeleteByMap() {
+        Map<String, Object> columnMap = new HashMap<>();
+        columnMap.put("user_name", "张雨琪");
+        columnMap.put("age", 31);
+        int i = userDao.deleteByMap(columnMap);
+        System.out.println("删除条数：" + i);
+    }
+
+    /**
+     * 批量删除
+     */
+    @Test
+    void testDeleteByBatchIds() {
+        int i = userDao.deleteBatchIds(Arrays.asList(3, 5));
+        System.out.println("删除的条数：" + i);
+    }
+
+    @Test
+    void testDeleteByWrapper() {
+        LambdaQueryWrapper<User> lambdaQueryWrapper = Wrappers.<User>lambdaQuery();
+        lambdaQueryWrapper.eq(User::getAge, 26).or().gt(User::getAge, 41);
+        int rows = userDao.delete(lambdaQueryWrapper);
+        System.out.println("删除的条数：" + rows);
+    }
+
 }
