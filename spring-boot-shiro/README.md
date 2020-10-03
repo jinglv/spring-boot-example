@@ -702,5 +702,204 @@ public class TestAuthenticatorCustomerRealm {
 }
 ```
 
+# Shiro整合SpringBoot项目
 
+## 整合思路
 
+![image-20201001111006232](https://gitee.com/JeanLv/study_image2/raw/master///image-20201001111006232.png)
+
+## 环境搭建
+
+本次实例是springboot+shiro+jsp搭建的环境
+
+1. 创建SpringBoot并引入依赖
+
+   ```xml
+   <!--Shiro整合SpringBoot依赖-->
+   <dependency>
+     <groupId>org.apache.shiro</groupId>
+     <artifactId>shiro-spring-boot-starter</artifactId>
+     <version>1.6.0</version>
+   </dependency>
+   
+   <!--jsp解析依赖-->
+   <dependency>
+     <groupId>org.apache.tomcat.embed</groupId>
+     <artifactId>tomcat-embed-jasper</artifactId>
+     <version>8.5.31</version>
+   </dependency>
+   
+   <dependency>
+     <groupId>jstl</groupId>
+     <artifactId>jstl</artifactId>
+     <version>1.2</version>
+   </dependency>
+   ```
+
+   
+
+2. 配置jsp
+
+   - 在src/main创建一个webapp目录，并在该目录下创建jsp文件：index.jsp
+
+     ![image-20201003154016946](https://gitee.com/JeanLv/study_image2/raw/master///image-20201003154016946.png)
+
+   - 在配置文件中进行配置，application.properties
+
+     ```properties
+     server.port=8088
+     server.servlet.context-path=/shiro
+     spring.application.name=shiro
+     # jsp配置
+     spring.mvc.view.prefix=/
+     spring.mvc.view.suffix=.jsp
+     ```
+
+   - 完成后，启动项目，访问地址：http://localhost:8088/shiro/index.jsp
+
+     - 这是会遇到这个问题：访问404，找不到jsp，这是找不到对应的工作目录，解决方式如下
+
+       ![image-20201003154327528](https://gitee.com/JeanLv/study_image2/raw/master///image-20201003154327528.png)
+
+       ![image-20201003154423486](https://gitee.com/JeanLv/study_image2/raw/master///image-20201003154423486.png)
+
+       ![image-20201003154511504](https://gitee.com/JeanLv/study_image2/raw/master///image-20201003154511504.png)
+
+       点击[OK]后，mvn clean install，重新启动项目即可
+
+3. 配置Shiro
+
+   - 创建配置类，创建config包，在该包下创建ShiroConfig.java，在该配置类配置如下内容
+
+     - 配置ShiroFilterFactoryBean，并配置认证和授权规则
+
+     - 配置WebSecurityManager
+
+     - 配置自定义realm
+
+       ```java
+       package com.example.shiro.config;
+       
+       import com.example.shiro.realm.UserRealm;
+       import org.apache.shiro.realm.Realm;
+       import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
+       import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+       import org.springframework.context.annotation.Bean;
+       import org.springframework.context.annotation.Configuration;
+       
+       import java.util.HashMap;
+       import java.util.Map;
+       
+       /**
+        * 用来整合Shiro框架相关的配置类
+        *
+        * @author jinglv
+        * @date 2020/10/03
+        */
+       @Configuration
+       public class ShiroConfig {
+       
+           /**
+            * 1. 创建shiroFilter
+            * 负责拦截所有请求
+            *
+            * @return
+            */
+           @Bean
+           public ShiroFilterFactoryBean getShiroFilterFactoryBean(DefaultWebSecurityManager defaultWebSecurityManager) {
+               ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
+               // 给filter设置安全管理器
+               shiroFilterFactoryBean.setSecurityManager(defaultWebSecurityManager);
+       
+               // 配置系统受限资源
+               // 配置系统公共资源
+               Map<String, String> map = new HashMap<>();
+               // autch请求这个资源需要认证和授权
+               map.put("/index.jsp", "authc");
+       
+               // 默认认证界面路径，不写的话，默认为login
+               shiroFilterFactoryBean.setLoginUrl("/login.jsp");
+               shiroFilterFactoryBean.setFilterChainDefinitionMap(map);
+               return shiroFilterFactoryBean;
+           }
+       
+           /**
+            * 2. 创建安全管理器
+            *
+            * @return
+            */
+           @Bean
+           public DefaultWebSecurityManager getDefaultWebSecurityManager(Realm realm) {
+               DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
+               // 给安全管理器设置Realm
+               defaultWebSecurityManager.setRealm(realm);
+               return defaultWebSecurityManager;
+           }
+       
+           /**
+            * 3. 创建自定义realm
+            *
+            * @return
+            */
+           @Bean
+           public Realm getRealm() {
+               UserRealm userRealm = new UserRealm();
+               return userRealm;
+           }
+       }
+       ```
+
+       
+
+   - 创建自定义Realm，暂时是空的
+
+     ```java
+     package com.example.shiro.realm;
+     
+     import org.apache.shiro.authc.AuthenticationException;
+     import org.apache.shiro.authc.AuthenticationInfo;
+     import org.apache.shiro.authc.AuthenticationToken;
+     import org.apache.shiro.authz.AuthorizationInfo;
+     import org.apache.shiro.realm.AuthorizingRealm;
+     import org.apache.shiro.subject.PrincipalCollection;
+     
+     /**
+      * 自定义Realm
+      *
+      * @author jinglv
+      * @date 2020/10/03
+      */
+     public class UserRealm extends AuthorizingRealm {
+         /**
+          * 处理授权
+          *
+          * @param principalCollection
+          * @return
+          */
+         @Override
+         protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
+             return null;
+         }
+     
+         /**
+          * 处理认证
+          *
+          * @param authenticationToken
+          * @return
+          * @throws AuthenticationException
+          */
+         @Override
+         protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
+             return null;
+         }
+     }
+     ```
+
+     
+
+4. 创建jsp跳转页面
+
+   - login.jsp: 公共资源
+   - Index.jsp：受限资源
+
+5. 启动项目，访问http://localhost:8088/shiro/index.jsp会跳转到http://localhost:8088/shiro/login.jsp页面
