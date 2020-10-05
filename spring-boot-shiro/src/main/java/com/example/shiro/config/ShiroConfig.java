@@ -34,8 +34,11 @@ public class ShiroConfig {
         // 配置系统受限资源
         // 配置系统公共资源
         Map<String, String> map = new HashMap<>();
+        // anon 设置公共资源
+        map.put("/user/login", "anon");
         // autch请求这个资源需要认证和授权
-        map.put("/index.jsp", "authc");
+        // /** 该方式表示全部资源需要认证  /index.jsp 也可指定具体的资源路径
+        map.put("/**", "authc");
 
         // 默认认证界面路径，不写的话，默认为login
         shiroFilterFactoryBean.setLoginUrl("/login.jsp");

@@ -903,3 +903,238 @@ public class TestAuthenticatorCustomerRealm {
    - Index.jsp：受限资源
 
 5. 启动项目，访问http://localhost:8088/shiro/index.jsp会跳转到http://localhost:8088/shiro/login.jsp页面
+
+
+
+## 常见过滤器
+
+注意：shiro提供和多个默认的过滤器，我们可以用这些过滤器来配置控制指定url的权限
+
+| 配置缩写          | 对应的过滤器                   | 功能                                                         |
+| ----------------- | ------------------------------ | ------------------------------------------------------------ |
+| anon(常用)        | AnonymousFilter                | 指定url可以匿名访问                                          |
+| authc(常用)       | FormAuthenticationFilter       | 指定url需要form表单登录，默认会从请求中获取`username`、`password`,`rememberMe`等参数并尝试登录，如果登录不了就会跳转到loginUrl配置的路径。我们也可以用这个过滤器做默认的登录逻辑，但是一般都是我们自己在控制器写登录逻辑的，自己写的话出错返回的信息都可以定制嘛。 |
+| authcBasic        | BasicHttpAuthenticationFilter  | 指定url需要basic登录                                         |
+| logout            | LogoutFilter                   | 登出过滤器，配置指定url就可以实现退出功能，非常方便          |
+| noSessionCreation | NoSessionCreationFilter        | 禁止创建会话                                                 |
+| perms             | PermissionsAuthorizationFilter | 需要指定权限才能访问                                         |
+| port              | PortFilter                     | 需要指定端口才能访问                                         |
+| rest              | HttpMethodPermissionFilter     | 将http请求方法转化成相应的动词来构造一个权限字符串，这个感觉意义不大，有兴趣自己看源码的注释 |
+| roles             | RolesAuthorizationFilter       | 需要指定角色才能访问                                         |
+| ssl               | SslFilter                      | 需要https请求才能访问                                        |
+| user              | UserFilter                     | 需要已登录或“记住我”的用户才能访问                           |
+
+## 认证实现和退出认证
+
+### 认证实现
+
+1. 在login.jsp中开发认证界面
+
+   ```jsp
+   <%@page contentType="text/html; UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
+   <!doctype html>
+   <html lang="en">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport"
+             content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+       <meta http-equiv="X-UA-Compatible" content="ie=edge">
+       <title>Document</title>
+   </head>
+   <body>
+   
+   <h1>用户登录</h1>
+   
+   <form action="${pageContext.request.contextPath}/user/login" method="post">
+       用户名:<input type="text" name="username"> <br/>
+       密码 : <input type="text" name="password"> <br>
+       <input type="submit" value="登录">
+   </form>
+   
+   </body>
+   </html>
+   ```
+
+   
+
+2. 开发UserController.java处理身份认证
+
+   ```java
+   package com.example.shiro.controller;
+   
+   import org.apache.shiro.SecurityUtils;
+   import org.apache.shiro.authc.IncorrectCredentialsException;
+   import org.apache.shiro.authc.UnknownAccountException;
+   import org.apache.shiro.authc.UsernamePasswordToken;
+   import org.apache.shiro.subject.Subject;
+   import org.springframework.stereotype.Controller;
+   import org.springframework.web.bind.annotation.RequestMapping;
+   
+   /**
+    * @author jinglv
+    * @date 2020/10/04
+    */
+   @Controller
+   @RequestMapping("user")
+   public class UserController {
+   
+       /**
+        * 处理身份认证
+        *
+        * @param username 用户名
+        * @param password 密码
+        * @return 返回认证信息
+        */
+       @RequestMapping("login")
+       public String login(String username, String password) {
+           // 获取主体对象
+           Subject subject = SecurityUtils.getSubject();
+           try {
+               subject.login(new UsernamePasswordToken(username, password));
+               return "redirect:/index.jsp";
+           } catch (IncorrectCredentialsException e) {
+               e.printStackTrace();
+               System.out.println("密码错误！");
+           } catch (UnknownAccountException e) {
+               e.printStackTrace();
+               System.out.println("用户名错误！");
+           }
+           return "redirect:/login.jsp";
+       }
+   }
+   
+   ```
+
+   
+
+   - 在认证过程中使用subject.login进行认证
+
+3. 开发UserRealm.java中返回静态数据(未连接数据库)
+
+   ```java
+   package com.example.shiro.realm;
+   
+   import org.apache.shiro.authc.AuthenticationException;
+   import org.apache.shiro.authc.AuthenticationInfo;
+   import org.apache.shiro.authc.AuthenticationToken;
+   import org.apache.shiro.authc.SimpleAuthenticationInfo;
+   import org.apache.shiro.authz.AuthorizationInfo;
+   import org.apache.shiro.realm.AuthorizingRealm;
+   import org.apache.shiro.subject.PrincipalCollection;
+   
+   /**
+    * 自定义Realm
+    *
+    * @author jinglv
+    * @date 2020/10/03
+    */
+   public class UserRealm extends AuthorizingRealm {
+       /**
+        * 处理授权
+        *
+        * @param principalCollection
+        * @return
+        */
+       @Override
+       protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
+           return null;
+       }
+   
+       /**
+        * 处理认证
+        *
+        * @param authenticationToken
+        * @return
+        * @throws AuthenticationException
+        */
+       @Override
+       protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
+           String principal = (String) authenticationToken.getPrincipal();
+           if ("admin".equals(principal)) {
+               return new SimpleAuthenticationInfo(principal, "123", this.getName());
+           }
+           return null;
+       }
+   }
+   ```
+
+   
+
+4. 启动项目以realm中定义静态数据进行认证
+
+   - 请求连接：http://localhost:8088/shiro/login.jsp 输入admin/123正确跳转到index.jsp，则认证成功
+   - 认证功能没有md5和随机盐的认证就实现啦
+
+### 退出认证
+
+1. 开发页面退出连接
+
+   ```jsp
+   <%@page contentType="text/html; UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
+   <%@taglib prefix="shiro" uri="http://shiro.apache.org/tags" %>
+   <!doctype html>
+   <html lang="en">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport"
+             content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+       <meta http-equiv="X-UA-Compatible" content="ie=edge">
+       <title>Document</title>
+   </head>
+   <body>
+   <h1>系统主页</h1>
+   <a href="">退出登录</a>
+   <ul>
+       <li><a href="">用户管理</a></li>
+       <li><a href="">商品管理</a></li>
+       <li><a href="">订单管理</a></li>
+       <li><a href="">物流管理</a></li>
+   </ul>
+   </body>
+   </html>
+   ```
+
+   
+
+2. UserController中增加退出登录请求
+
+   ```java
+   /**
+   * 退出登录
+   *
+   * @return
+   */
+   @RequestMapping("logout")
+   public String logout() {
+     // 获取主体对象
+     Subject subject = SecurityUtils.getSubject();
+     // 退出操作
+     subject.logout();
+     return "redirect:/login.jsp";
+   }
+   ```
+
+   
+
+3. 修改退出连接访问退出路径
+
+   ```jsp
+   <body>
+   <h1>系统主页</h1>
+   <a href="${pageContext.request.contextPath}/user/logout">退出登录</a>
+   <ul>
+       <li><a href="">用户管理</a></li>
+       <li><a href="">商品管理</a></li>
+       <li><a href="">订单管理</a></li>
+       <li><a href="">物流管理</a></li>
+   </ul>
+   </body>
+   ```
+
+   
+
+4. 退出之后访问受限资源立即返回认证界面
+
+   - 请求连接：http://localhost:8088/shiro/login.jsp 输入admin/123正确跳转到index.jsp，则认证成功
+   - 在index.jsp界面点击"退出登录"跳转到login.jsp
+
