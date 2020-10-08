@@ -1,6 +1,7 @@
 package com.example.shiro.config;
 
 import com.example.shiro.realm.UserRealm;
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
@@ -36,6 +37,8 @@ public class ShiroConfig {
         Map<String, String> map = new HashMap<>();
         // anon 设置公共资源
         map.put("/user/login", "anon");
+        map.put("/user/register", "anon");
+        map.put("/register.jsp", "anon");
         // autch请求这个资源需要认证和授权
         // /** 该方式表示全部资源需要认证  /index.jsp 也可指定具体的资源路径
         map.put("/**", "authc");
@@ -67,6 +70,13 @@ public class ShiroConfig {
     @Bean
     public Realm getRealm() {
         UserRealm userRealm = new UserRealm();
+        // 修改凭证校验匹配器
+        HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
+        // 设置加密算法md5
+        credentialsMatcher.setHashAlgorithmName("MD5");
+        // 设置散列次数
+        credentialsMatcher.setHashIterations(1024);
+        userRealm.setCredentialsMatcher(credentialsMatcher);
         return userRealm;
     }
 }

@@ -1,5 +1,7 @@
 package com.example.shiro.controller;
 
+import com.example.shiro.entity.User;
+import com.example.shiro.service.UserService;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
@@ -15,6 +17,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("user")
 public class UserController {
+
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    /**
+     * 用户注册
+     *
+     * @param user 用户信息
+     * @return 接口调用结果
+     */
+    @RequestMapping("register")
+    public String register(User user) {
+        try {
+            userService.register(user);
+            return "redirect:/index.jsp";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "redirect:/register.jsp";
+        }
+    }
 
     /**
      * 处理身份认证

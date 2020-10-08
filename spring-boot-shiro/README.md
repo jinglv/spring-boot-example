@@ -1138,3 +1138,476 @@ public class TestAuthenticatorCustomerRealm {
    - 请求连接：http://localhost:8088/shiro/login.jsp 输入admin/123正确跳转到index.jsp，则认证成功
    - 在index.jsp界面点击"退出登录"跳转到login.jsp
 
+
+
+## MD5、Salt的认证实现
+
+### 开发数据库注册
+
+1. 开发数据库及数据表
+
+   ```sql
+   CREATE DATABASE shiro DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+   
+   USE shiro;
+   
+   DROP TABLE IF EXISTS `t_user`;
+   CREATE TABLE `t_user`
+   (
+       `id`       int(6) NOT NULL AUTO_INCREMENT,
+       `username` varchar(40)  DEFAULT NULL,
+       `password` varchar(40)  DEFAULT NULL,
+       `salt`     varchar(255) DEFAULT NULL,
+       PRIMARY KEY (`id`)
+   ) ENGINE = InnoDB
+     AUTO_INCREMENT = 2
+     DEFAULT CHARSET = utf8mb4;
+   ```
+
+   
+
+2. 项目引入mybatis及mysql相关依赖
+
+   ```xml
+   <!--MySQL相关-->
+   <dependency>
+     <groupId>org.mybatis.spring.boot</groupId>
+     <artifactId>mybatis-spring-boot-starter</artifactId>
+     <version>2.1.3</version>
+   </dependency>
+   
+   <dependency>
+     <groupId>mysql</groupId>
+     <artifactId>mysql-connector-java</artifactId>
+     <version>8.0.21</version>
+   </dependency>
+   
+   <dependency>
+     <groupId>com.alibaba</groupId>
+     <artifactId>druid</artifactId>
+     <version>1.1.23</version>
+   </dependency>
+   ```
+
+   
+
+3. 配置数据源相关在application.properties配置文件
+
+   ```properties
+   # 数据库配置
+   spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+   spring.datasource.url=jdbc:mysql://localhost:3306/shiro?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=true
+   spring.datasource.username=root
+   spring.datasource.password=123123
+   # MyBaits配置
+   mybatis.config-location=classpath:mybatis/mybatis-config.xml
+   mybatis.mapper-locations=classpath:mybatis/mapper/*.xml
+   mybatis.type-aliases-package=com.example.shiro.entity
+   ```
+
+4. 创建User实体类User.java
+
+   ```java
+   package com.example.shiro.entity;
+   
+   import lombok.AllArgsConstructor;
+   import lombok.Data;
+   import lombok.NoArgsConstructor;
+   import lombok.experimental.Accessors;
+   
+   /**
+    * @author jinglv
+    * @date 2020/10/08
+    */
+   @Data
+   @Accessors(chain = true)
+   @AllArgsConstructor
+   @NoArgsConstructor
+   public class User {
+       private String id;
+       private String username;
+       private String password;
+       private String salt;
+   }
+   ```
+
+   
+
+5. 创建User的DAO类
+
+   ```java
+   package com.example.shiro.dao;
+   
+   import com.example.shiro.entity.User;
+   
+   /**
+    * @author jinglv
+    * @date 2020/10/08
+    */
+   public interface UserDAO {
+   
+       /**
+        * 用户信息保存
+        *
+        * @param user 用户信息
+        */
+       void save(User user);
+   }
+   ```
+
+   
+
+6. 开发mapper配置文件
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8" ?>
+   <!DOCTYPE mapper
+           PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+           "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+   <mapper namespace="com.example.shiro.dao.UserDAO">
+   
+       <insert id="save" parameterType="User" useGeneratedKeys="true" keyProperty="id">
+           INSERT INTO t_user VALUES (#{id},#{username},#{password},#{salt});
+       </insert>
+   </mapper>
+   ```
+
+   
+
+7. 开发service接口
+
+   ```java
+   package com.example.shiro.service;
+   
+   import com.example.shiro.entity.User;
+   
+   /**
+    * @author jinglv
+    * @date 2020/10/08
+    */
+   public interface UserService {
+       /**
+        * 用户注册
+        *
+        * @param user 用户信息
+        */
+       void register(User user);
+   }
+   ```
+
+   
+
+8. 创建salt工具类
+
+   ```java
+   package com.example.shiro.utils;
+   
+   import java.util.Random;
+   
+   /**
+    * @author jinglv
+    * @date 2020/10/08
+    */
+   public class SaltUtils {
+   
+       /**
+        * 生成Salt(随机字符)的静态方法
+        *
+        * @param n 字符长度
+        * @return 返回随机盐字符串
+        */
+       public static String getSalt(int n) {
+           char[] chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()".toCharArray();
+           StringBuilder sb = new StringBuilder();
+           for (int i = 0; i < n; i++) {
+               char c = chars[new Random().nextInt(chars.length)];
+               sb.append(c);
+           }
+           return sb.toString();
+       }
+   
+   }
+   ```
+
+   
+
+9. 开发service实现类
+
+   ```java
+   package com.example.shiro.service.Impl;
+   
+   import com.example.shiro.dao.UserDAO;
+   import com.example.shiro.entity.User;
+   import com.example.shiro.service.UserService;
+   import com.example.shiro.utils.SaltUtils;
+   import org.apache.shiro.crypto.hash.Md5Hash;
+   import org.springframework.stereotype.Service;
+   
+   /**
+    * @author jinglv
+    * @date 2020/10/08
+    */
+   @Service
+   public class UserServiceImpl implements UserService {
+   
+       private final UserDAO userDAO;
+   
+       public UserServiceImpl(UserDAO userDAO) {
+           this.userDAO = userDAO;
+       }
+   
+       /**
+        * 开发注册功能
+        *
+        * @param user 用户信息
+        */
+       @Override
+       public void register(User user) {
+           // 处理业务调用DAO
+           // 1.生成随机盐
+           String salt = SaltUtils.getSalt(8);
+           // 2.将随机盐保存到数据
+           user.setSalt(salt);
+           // 3.明文密码进行 md5+salt+hash散列
+           Md5Hash md5Hash = new Md5Hash(user.getPassword(), salt, 1024);
+           user.setPassword(md5Hash.toHex());
+           // 保存到数据库中
+           userDAO.save(user);
+       }
+   }
+   
+   ```
+
+   注意：这一步，不要忘记加`@Service`注解
+
+10. 开发Controller
+
+    ```java
+    package com.example.shiro.controller;
+    
+    import com.example.shiro.entity.User;
+    import com.example.shiro.service.UserService;
+    import org.apache.shiro.SecurityUtils;
+    import org.apache.shiro.authc.IncorrectCredentialsException;
+    import org.apache.shiro.authc.UnknownAccountException;
+    import org.apache.shiro.authc.UsernamePasswordToken;
+    import org.apache.shiro.subject.Subject;
+    import org.springframework.stereotype.Controller;
+    import org.springframework.web.bind.annotation.RequestMapping;
+    
+    /**
+     * @author jinglv
+     * @date 2020/10/04
+     */
+    @Controller
+    @RequestMapping("user")
+    public class UserController {
+    
+        private final UserService userService;
+    
+        public UserController(UserService userService) {
+            this.userService = userService;
+        }
+    
+        /**
+         * 用户注册
+         *
+         * @param user 用户信息
+         * @return 接口调用结果
+         */
+        @RequestMapping("register")
+        public String register(User user) {
+            try {
+                userService.register(user);
+                return "redirect:/index.jsp";
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "redirect:/register.jsp";
+            }
+        }
+    }
+    
+    ```
+
+    
+
+11. 修改启动类并进行项目启动
+
+    ```java
+    package com.example.shiro;
+    
+    import org.apache.shiro.spring.boot.autoconfigure.ShiroAutoConfiguration;
+    import org.mybatis.spring.annotation.MapperScan;
+    import org.springframework.boot.SpringApplication;
+    import org.springframework.boot.autoconfigure.SpringBootApplication;
+    
+    /**
+     * @author jingLv
+     * @date 2020/09/23
+     */
+    @SpringBootApplication(exclude = {ShiroAutoConfiguration.class})
+    @MapperScan("com.example.shiro.dao")
+    public class SpringBootShiroApplication {
+    
+        public static void main(String[] args) {
+            SpringApplication.run(SpringBootShiroApplication.class, args);
+        }
+    }
+    ```
+
+    注意：在启动类上加Mapper的扫描包，这样就不用每个Mapper（DAO）类上加注解`@Mapper`
+
+12. 访问注册页面http://localhost:8088/shiro/register.jsp，并进行注册，查看数据库
+
+    ![image-20201008142109415](https://gitee.com/JeanLv/study_image2/raw/master///image-20201008142109415.png)
+
+
+
+### 开发数据库认证
+
+1. User的DAO类中开发查找用户信息
+
+   ```java
+   /**
+   * 根据用户名查询用户信息
+   *
+   * @param username 用户名
+   * @return 返回用户信息
+   */
+   User findByUserName(String username);
+   ```
+
+   
+
+2. User的mapper文件中配置对应的数据库查询
+
+   ```xml
+   <select id="findByUserName" parameterType="String" resultType="User">
+     SELECT id,username,password,salt FROM t_user WHERE username=#{username};
+   </select>
+   ```
+
+   
+
+3. UserService接口中开发对应的查询用户信息的方法
+
+   ```java
+   /**
+   * 根据用户名查询用户信息
+   *
+   * @param username 用户名
+   * @return 用户信息
+   */
+   User findByUserName(String username);
+   ```
+
+   
+
+4. 对应的UserService实现类中开发查询用户信息的方法
+
+   ```java
+   /**
+   * 根据用户名查询用户信息实现
+   *
+   * @param username 用户名
+   * @return 返回用户信息
+   */
+   @Override
+   public User findByUserName(String username) {
+     return userDAO.findByUserName(username);
+   }
+   ```
+
+   
+
+5. 开发在工厂中获取bean对象的工具类
+
+   ```java
+   package com.example.shiro.utils;
+   
+   import org.springframework.beans.BeansException;
+   import org.springframework.context.ApplicationContext;
+   import org.springframework.context.ApplicationContextAware;
+   import org.springframework.stereotype.Component;
+   
+   /**
+    * 开发在工厂中获取bean对象的工具类
+    *
+    * @author jinglv
+    * @date 2020/10/08
+    */
+   @Component
+   public class ApplicationContextUtils implements ApplicationContextAware {
+   
+       private static ApplicationContext context;
+   
+       @Override
+       public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+           context = applicationContext;
+       }
+   
+       /**
+        * 根据Bean的名字获取指定的bean对象
+        *
+        * @param beanName
+        * @return
+        */
+       public static Object getBean(String beanName) {
+           return context.getBean(beanName);
+       }
+   }
+   ```
+
+   
+
+6. 修改自定义realm中的认证处理
+
+   ```java
+   /**
+   * 处理认证
+   *
+   * @param authenticationToken
+   * @return
+   * @throws AuthenticationException
+   */
+   @Override
+   protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
+     // 根据身份信息到数据库查询
+     String principal = (String) authenticationToken.getPrincipal();
+     // 在工厂中获取service对象
+     UserService userService = (UserService) ApplicationContextUtils.getBean("userService");
+     // 根据获得username到数据库中查询用户信息
+     User user = userService.findByUserName(principal);
+     if (!ObjectUtils.isEmpty(user)) {
+       return new SimpleAuthenticationInfo(user.getUsername(), user.getPassword(), ByteSource.Util.bytes(user.getSalt()), this.getName());
+     }
+     return null;
+   }
+   ```
+
+   
+
+7. 修改ShiroConfig中realm使用凭证匹配器以及hash散列
+
+   ```java
+   /**
+   * 3. 创建自定义realm
+   *
+   * @return
+   */
+   @Bean
+   public Realm getRealm() {
+     UserRealm userRealm = new UserRealm();
+     // 修改凭证校验匹配器
+     HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
+     // 设置加密算法md5
+     credentialsMatcher.setHashAlgorithmName("MD5");
+     // 设置散列次数
+     credentialsMatcher.setHashIterations(1024);
+     userRealm.setCredentialsMatcher(credentialsMatcher);
+     return userRealm;
+   }
+   ```
+
+8. 启动工程，访问登录页面http://localhost:8088/shiro/login.jsp，输入用户名admin/123123，点击【登录】，登录成功
+
