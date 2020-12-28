@@ -34,10 +34,10 @@ public class UserController {
 
         Map<String, Object> result = new HashMap<>();
         try {
-            User userDB = userService.login(user);
+            User userDb = userService.login(user);
             Map<String, String> payload = new HashMap<>();
-            payload.put("id", userDB.getId());
-            payload.put("userName", userDB.getUserName());
+            payload.put("id", userDb.getId());
+            payload.put("userName", userDb.getUserName());
             // 生成JWT令牌
             String token = JWTUtils.getToken(payload);
             result.put("state", true);

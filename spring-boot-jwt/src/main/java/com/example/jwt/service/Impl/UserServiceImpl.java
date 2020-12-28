@@ -4,7 +4,6 @@ import com.example.jwt.dao.UserDAO;
 import com.example.jwt.entity.User;
 import com.example.jwt.service.UserService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -22,12 +21,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.SUPPORTS)
     public User login(User user) {
         // 根据接收用户名和密码查询数据库
-        User userDB = userDao.login(user);
-        if (userDB != null) {
-            return userDB;
+        User userDb = userDao.login(user);
+        if (userDb != null) {
+            return userDb;
         }
         throw new RuntimeException("登录失败--");
     }
