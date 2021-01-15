@@ -1,8 +1,9 @@
-package com.example.mybatis.model;
+package com.example.mybatis.annotation.model;
 
-import com.example.mybatis.enums.GenderEnum;
+import com.example.mybatis.annotation.enums.GenderEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 
@@ -11,6 +12,7 @@ import java.io.Serializable;
  * @date 2020/09/24
  */
 @Data
+@Accessors(chain = true)
 @NoArgsConstructor
 public class User implements Serializable {
 

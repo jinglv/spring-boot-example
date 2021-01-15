@@ -4,11 +4,11 @@ import com.example.mybatis.enums.GenderEnum;
 import com.example.mybatis.model.User;
 import com.example.mybatis.param.UserParam;
 import com.example.mybatis.result.Page;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import java.util.List;
  * @author jingLv
  * @date 2020/09/24
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class UserMapperTest {
 
@@ -52,7 +52,7 @@ public class UserMapperTest {
 
     @Test
     public void deleteUser() {
-        userMapper.deleteUser(1l);
+        userMapper.deleteUser(1L);
     }
 
     @Test
@@ -63,7 +63,7 @@ public class UserMapperTest {
 
         List<User> users = userMapper.getList(userParam);
         long count = userMapper.getCount(userParam);
-        Page page = new Page(userParam, count, users);
+        Page<User> page = new Page<>(userParam, count, users);
         System.out.println(page);
     }
 }

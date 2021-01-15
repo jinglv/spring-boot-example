@@ -1,6 +1,6 @@
-package com.example.mybatis.result;
+package com.example.mybatis.annotation.result;
 
-import com.example.mybatis.param.PageParam;
+import com.example.mybatis.annotation.param.PageParam;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -35,7 +35,7 @@ public class Page<E> implements Serializable {
      */
     private List<E> list;
 
-    public static Page<Object> NULL = new Page<>(0, 0, 15, new ArrayList<>());
+    public static Page NULL = new Page<>(0, 0, 15, new ArrayList<>());
 
     public Page() {
         super();

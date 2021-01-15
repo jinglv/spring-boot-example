@@ -1,4 +1,4 @@
-package com.example.mybatis.param;
+package com.example.mybatis.annotation.param;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
