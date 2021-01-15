@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!--1.指明对应文件的 Mapper 类地址-->
+<mapper namespace="com.example.mybatis.multi.mapper.one.UserOneMapper">
+    <!--2.配置表结构和类的对应关系-->
+    <!--
+        这里为了更好的贴近工作情况，将类的两个字段和数据库字段设置为不一致，其中一个使用了枚举。使用枚举有一个非常大的优点，插入此属性的数据会自动进行校验，如果不是枚举的内容会报错。
+    -->
+    <resultMap id="BaseResultMap" type="com.example.mybatis.multi.model.User">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="user_name" property="userName" jdbcType="VARCHAR"/>
+        <result column="pass_word" property="passWord" jdbcType="VARCHAR"/>
+        <result column="gender" property="gender" javaType="com.example.mybatis.multi.enums.GenderEnum"/>
+        <result column="nick_name" property="nickName" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--3. 写具体的SQL语句-->
+    <!--公用的一些XML片段可以提取出来，在其他SQL中去引用-->
+    <sql id="Base_Column_List">
+        id, user_name, pass_word, gender, nick_name
+    </sql>
+
+    <!--先将查询条件提取出-->
+    <sql id="Base_Where_List">
+        <if test="userName != null  and userName != ''">
+            and user_name = #{userName}
+        </if>
+        <if test="gender != null and gender != ''">
+            and gender = #{gender}
+        </if>
+    </sql>
+
+    <!--查询所有的用户-->
+    <!--
+        使用include引入上面定义需要查询的表字段
+    -->
+    <select id="getAllUsers" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+    </select>
+
+    <!--根据id查询用户-->
+    <select id="getOne" parameterType="Long" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        WHERE id = #{id}
+    </select>
+
+    <!--新增用户-->
+    <insert id="insertUser" parameterType="com.example.mybatis.multi.model.User">
+        INSERT INTO users(user_name, pass_word, gender, nick_name)
+        VALUES (#{userName}, #{passWord}, #{gender}, #{nickName})
+    </insert>
+
+    <!--修改用户信息-->
+    <!--
+        update的SQL使用了if标签，可以根据不同的条件生产动态SQL
+    -->
+    <update id="updateUser" parameterType="com.example.mybatis.multi.model.User">
+        UPDATE users
+        SET
+        <if test="userName != null">user_name = #{userName},</if>
+        <if test="passWord != null">pass_word = #{passWord},</if>
+        nick_name = #{nickName}
+        where
+        id = #{id}
+    </update>
+
+    <delete id="deleteUser" parameterType="Long">
+        DELETE
+        FROM users
+        WHERE id = #{id}
+    </delete>
+
+    <!--从对象 UserParam 中获取分页信息和查询条件，最后进行组合-->
+    <select id="getList" resultMap="BaseResultMap" parameterType="com.example.mybatis.multi.param.UserParam">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM users
+        WHERE 1=1
+        <include refid="Base_Where_List"/>
+        ORDER BY id DESC
+        LIMIT #{beginLine} , #{pageSize}
+    </select>
+
+    <!--前端需要展示总共的页码，因此需要统计出查询结果的总数-->
+    <select id="getCount" resultType="Integer" parameterType="com.example.mybatis.multi.param.UserParam">
+        select
+        count(1)
+        from users
+        where 1=1
+        <include refid="Base_Where_List"/>
+    </select>
+
+</mapper>

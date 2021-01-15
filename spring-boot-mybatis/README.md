@@ -379,27 +379,3 @@ com.example.mybatis.mapper包下UserMapper.java，这里的方法名需要和 XM
     ```
 
 Page 将分页信息和数据信息进行封装，方便前端显示第几页、总条数和数据，这样分页功能就完成了。
-
-## 多数据源处理
-1. 配置文件，需要配置两个不同的数据源
-    ```properties
-    mybatis.config-location=classpath:mybatis/mybatis-config.xml
-    logging.level.com.neo.mapper=debug
-    spring.datasource.one.url=jdbc:mysql://localhost:3306/test?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=true
-    spring.datasource.one.username=root
-    spring.datasource.oen.password=123123
-    spring.datasource.one.driver-class-name=com.mysql.cj.jdbc.Driver
-    spring.datasource.two.url=jdbc:mysql://localhost:3306/test_tp?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=true
-    spring.datasource.two.username=root
-    spring.datasource.two.password=123123
-    spring.datasource.two.driver-class-name=com.mysql.cj.jdbc.Driver
-    ```
-    注意，需要提前在 test1 和 test2 库中创建好 User 表结构。
-    
-    - 第一个数据源以 spring.datasource.one.* 为前缀连接数据库 test
-    - 第二个数据源以 spring.datasource.two.* 为前缀连接数据库 test_tp
-2. 在resources/mybatis/mapper下，分别创建两个目录，创建各自的*Mapper.xml文件，对应的mapper包下分别创建两个包，创建个子的*Mapper.java
-2. 数据源配置类，创建config包，分别创建DataSource1Config.java和DataSource2Config.java
-    - 从上面的步骤我们可以总结出来，创建多数据源的过程就是：首先创建 DataSource，注入到 SqlSessionFactory 中，再创建事务，将 SqlSessionFactory 注入到创建的 SqlSessionTemplate 中，最后将 SqlSessionTemplate 注入到对应的 Mapper 包路径下。其中需要指定分库的 Mapper 包路径。
-    - 注意，在多数据源的情况下，我们不需要在启动类添加：@MapperScan("com.xxx.mapper") 的注解。
-3. 测试，配置好多数据源之后，在项目中想使用哪个数据源就把对应数据源注入到类中使用即可
