@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @date 2021/01/14
  */
 @SpringBootApplication
-@MapperScan("com.example.mybatis.annotation.mapper;")
+@MapperScan("com.example.mybatis.annotation.mapper")
 public class SpringBootMybatisAnnotationApplication {
 
     public static void main(String[] args) {

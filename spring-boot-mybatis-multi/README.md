@@ -1,4 +1,4 @@
-# MyBatis 多数据源处理
+# MyBatis XML配置版多数据源处理
 1. 配置文件，需要配置两个不同的数据源
     ```properties
     mybatis.config-location=classpath:mybatis/mybatis-config.xml
