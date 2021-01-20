@@ -2,13 +2,14 @@
 <project version="4">
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/spring-boot-banner/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/spring-boot-jwt/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/spring-boot-maven/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/spring-boot-mybatis-annotaion-multi/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/spring-boot-mybatis-annotation/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/spring-boot-mybatis-multi/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/spring-boot-mybatis-plus/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/spring-boot-mybatis/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/spring-boot-shiro/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/spring-boot-jpa学习/spring-boot-jpa/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/spring-boot-mybatis学习/spring-boot-mybatis-annotaion-multi/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/spring-boot-mybatis学习/spring-boot-mybatis-annotation/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/spring-boot-mybatis学习/spring-boot-mybatis-multi/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/spring-boot-mybatis学习/spring-boot-mybatis-plus/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/spring-boot-mybatis学习/spring-boot-mybatis/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/spring-boot认证体系/spring-boot-jwt/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/spring-boot认证体系/spring-boot-shiro/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/spring-boot项目创建/spring-boot-maven/src/main/java" charset="UTF-8" />
   </component>
 </project>

@@ -11,11 +11,15 @@
 
     <modules>
         <module>spring-boot-banner</module>
-        <module>spring-boot-maven</module>
-        <module>spring-boot-shiro</module>
-        <module>spring-boot-mybatis</module>
-        <module>spring-boot-mybatis-plus</module>
-        <module>spring-boot-jwt</module>
+        <module>spring-boot项目创建/spring-boot-maven</module>
+        <module>spring-boot认证体系/spring-boot-jwt</module>
+        <module>spring-boot认证体系/spring-boot-shiro</module>
+        <module>spring-boot-mybatis学习/spring-boot-mybatis</module>
+        <module>spring-boot-mybatis学习/spring-boot-mybatis-plus</module>
+        <module>spring-boot-mybatis学习/spring-boot-mybatis-multi</module>
+        <module>spring-boot-mybatis学习/spring-boot-mybatis-annotation</module>
+        <module>spring-boot-mybatis学习/spring-boot-mybatis-annotaion-multi</module>
+        <module>spring-boot-jpa学习/spring-boot-jpa</module>
     </modules>
 
     <properties>

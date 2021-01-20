@@ -39,6 +39,14 @@
         <option value="$PROJECT_DIR$/spring-boot-mybatis-annotation/pom.xml" />
         <option value="$PROJECT_DIR$/spring-boot-mybatis-multi/pom.xml" />
         <option value="$PROJECT_DIR$/spring-boot-mybatis-annotaion-multi/pom.xml" />
+        <option value="$PROJECT_DIR$/spring-boot-jpa/pom.xml" />
+        <option value="$PROJECT_DIR$/spring-boot-jwt/pom.xml" />
+        <option value="$PROJECT_DIR$/spring-boot-mybaits学习/spring-boot-mybatis/pom.xml" />
+        <option value="$PROJECT_DIR$/spring-boot-mybaits学习/spring-boot-mybatis-annotaion-multi/pom.xml" />
+        <option value="$PROJECT_DIR$/spring-boot-mybaits学习/spring-boot-mybatis-annotation/pom.xml" />
+        <option value="$PROJECT_DIR$/spring-boot-mybaits学习/spring-boot-mybatis-multi/pom.xml" />
+        <option value="$PROJECT_DIR$/spring-boot-mybaits学习/spring-boot-mybatis-plus/pom.xml" />
+        <option value="$PROJECT_DIR$/spring-boot认证体系/spring-boot-shiro/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">
