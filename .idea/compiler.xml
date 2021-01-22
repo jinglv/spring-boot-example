@@ -12,9 +12,10 @@
         <module name="spring-boot-maven" />
         <module name="spring-boot-jpa" />
         <module name="spring-boot-jwt" />
-        <module name="spring-boot-mybatis-plus" />
-        <module name="spring-boot-mybatis" />
+        <module name="spring-boot-mybatis-druid" />
         <module name="spring-boot-mybatis-multi" />
+        <module name="spring-boot-mybatis" />
+        <module name="spring-boot-mybatis-plus" />
         <module name="spring-boot-mybatis-annotaion-multi" />
         <module name="spring-boot-shiro" />
       </profile>
@@ -32,6 +33,7 @@
       <module name="spring-boot-mybatis" options="-parameters" />
       <module name="spring-boot-mybatis-annotaion-multi" options="-parameters" />
       <module name="spring-boot-mybatis-annotation" options="-parameters" />
+      <module name="spring-boot-mybatis-druid" options="-parameters" />
       <module name="spring-boot-mybatis-multi" options="-parameters" />
       <module name="spring-boot-mybatis-plus" options="-parameters" />
       <module name="spring-boot-shiro" options="-parameters" />

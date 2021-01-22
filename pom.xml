@@ -20,6 +20,7 @@
         <module>spring-boot-mybatis学习/spring-boot-mybatis-annotation</module>
         <module>spring-boot-mybatis学习/spring-boot-mybatis-annotaion-multi</module>
         <module>spring-boot-jpa学习/spring-boot-jpa</module>
+        <module>spring-boot-druid监控数据源学习/spring-boot-mybatis-druid</module>
     </modules>
 
     <properties>

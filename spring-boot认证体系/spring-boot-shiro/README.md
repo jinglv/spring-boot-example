@@ -114,7 +114,7 @@ shiro提供了一套加密/解密的组件，方便开发。比如提供常用�
    jack=123456
    ```
 
-   ![image-20200920153913626](https://gitee.com/JeanLv/study_image2/raw/master///image-20200920153913626.png)
+   ![image-20210121164640609](https://gitee.com/JeanLv/study_image/raw/master///image-20210121164640609.png)
 
 3. 认证开发代码
 
