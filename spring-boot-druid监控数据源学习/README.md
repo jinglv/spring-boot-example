@@ -3,14 +3,22 @@ Druid 是阿里巴巴开源平台上的一个项目，整个项目由数据库�
 
 Druid 首先是一个数据库连接池，但它不仅仅是一个数据库连接池，还包含了一个 ProxyDriver，一系列内置的 JDBC 组件库，一个 SQL Parser。在 Java 的世界中 Druid 是监控做的最好的数据库连接池，在功能、性能、扩展性方面，也有不错的表现。
 
+[Druid官方指南](https://github.com/alibaba/druid/wiki)
+
+
+
 ## Druid 可以做什么
+
 - 替换其他 Java 连接池，Druid 提供了一个高效、功能强大、可扩展性好的数据库连接池。
 - 可以监控数据库访问性能，Druid 内置提供了一个功能强大的 StatFilter 插件，能够详细统计 SQL 的执行性能，这对于线上分析数据库访问性能有很大帮助。
 - 数据库密码加密。直接把数据库密码写在配置文件中，这是不好的行为，容易导致安全问题，DruidDruiver 和 DruidDataSource 都支持 PasswordCallback。
 - SQL 执行日志，Druid 提供了不同的 LogFilter，能够支持 Common-Logging、Log4j 和 JdkLog，可以按需要选择相应的 LogFilter，监控应用的数据库访问情况。
 - 扩展 JDBC，如果你要对 JDBC 层有编程的需求，可以通过 Druid 提供的 Filter 机制，很方便编写 JDBC 层的扩展插件。
 
+
+
 # Spring Boot 集成 Druid
+
 非常令人高兴的是，阿里为 Druid 也提供了 Spring Boot Starter 的支持。官网这样解释：Druid Spring Boot Starter 用于帮助你在 Spring Boot 项目中轻松集成 Druid 数据库连接池和监控。
 
 Druid Spring Boot Starter 主要做了哪些事情呢？其实这个组件包很简单，主要提供了很多自动化的配置，按照 Spring Boot 的理念对很多内容进行了预配置，让我们在使用的时候更加的简单和方便。
@@ -113,7 +121,7 @@ public class DruidConfig {
         Map<String, String> initParams = new HashMap<>(16);
         // 设置用户名账户密码是固定的
         initParams.put("loginUsername", "admin");
-        initParams.put("loginPassword", "admin");
+        initParams.put("loginPassword", "123456");
         // 这个值为空就允许所有人访问
         initParams.put("allow", "");
         bean.setInitParameters(initParams);
@@ -146,4 +154,24 @@ public class DruidConfig {
 
 首页会展示项目使用的 JDK 版本、数据库驱动、JVM 相关统计信息。根据上面的菜单可以看出 Druid 的功能非常强大，支持数据源、SQL 监控、SQL 防火墙、URI 监控等很多功能。
 
+在什么都没有操作时，点击“数据源”，会有如下展示：
+
+![image-20210126105138201](https://gitee.com/JeanLv/study_image/raw/master///image-20210126105138201.png)
+
+看到有一行红字，会以为是报错，不要慌，仔细看这个描述，这就是一个备注信息，提示用的，表明带 * 号的项是可能进行用户配置的。问题的原因是，项目中之前一直没有没有连接过一次数据库，没有使用过一次Database，也导致 database 的 init 方法没有初始化，所以这里是没有相关的信息的。之后我们进行功能操作，这时“数据源”的信息加载出来了，如下：
+
+![image-20210126105444677](https://gitee.com/JeanLv/study_image/raw/master///image-20210126105444677-20210126105504165-20210126105509448.png)
+
+我当时也以为是报错，去网上搜了一圈，乱七八糟的方案，很多都是一样的，明显都是乱拷一通。
+
+
+
 我们这里重点介绍一下 SQL 监控，具体的展示信息如下：
+
+
+
+
+
+这里的 SQL 监控会将项目中具体执行的 SQL 打印出来，展示此 SQL 执行了多少次、每次返回多少数据、执行的时间分布是什么。这些功能非常的实用，方便我们在实际生产中查找出慢 SQL，最后对 SQL 进行调优。
+
+从这个例子可发现，使用 Spring Boot 集成 Druid 非常的简单，只需要添加依赖，简单配置就可以。

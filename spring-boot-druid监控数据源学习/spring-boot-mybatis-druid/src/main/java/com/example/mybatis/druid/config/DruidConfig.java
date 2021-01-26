@@ -39,7 +39,7 @@ public class DruidConfig {
         Map<String, String> initParams = new HashMap<>(16);
         // 设置用户名账户密码是固定的
         initParams.put("loginUsername", "admin");
-        initParams.put("loginPassword", "admin");
+        initParams.put("loginPassword", "123456");
         // 这个值为空就允许所有人访问
         initParams.put("allow", "");
         bean.setInitParameters(initParams);
