@@ -11,6 +11,7 @@
 
     <modules>
         <module>spring-boot-banner</module>
+        <module>spring-boot-easypoi</module>
         <module>spring-boot项目创建/spring-boot-maven</module>
         <module>spring-boot认证体系/spring-boot-jwt</module>
         <module>spring-boot认证体系/spring-boot-shiro</module>
@@ -26,6 +27,5 @@
     <properties>
         <java.version>1.8</java.version>
     </properties>
-
 
 </project>

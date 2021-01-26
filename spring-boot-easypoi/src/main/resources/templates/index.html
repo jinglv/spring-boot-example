@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>导入excel的主页面</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>选择Excel文件导入到数据中</h1>
+            <form th:action="@{/user/import}" method="post" enctype="multipart/form-data" class="form-inline">
+                <div class="form-group">
+                    <input class="form-control" type="file" name="excelFile">
+                    <input type="submit" class="btn btn-danger" value="导入数据">
+                </div>
+            </form>
+        </div>
+        <div class="col-md-12">
+            <h1>显示导入数据列表</h1>
+            <table class="table table-bordered">
+                <tr>
+                    <th>编号</th>
+                    <th>头像</th>
+                    <th>姓名</th>
+                    <th>年龄</th>
+                    <th>生日</th>
+                    <th>状态</th>
+                </tr>
+                <tr th:each="user : ${users}">
+                    <td th:text="${user.id}"></td>
+                    <td><img th:src="${'/imgs/'+ user.photo}" height="60px" alt=""></td>
+                    <td th:text="${user.name}"></td>
+                    <td th:text="${#dates.format(user.bir,'yyyy-MM-dd')}"></td>
+                    <td th:text="${user.age}"></td>
+                    <td th:text="${user.status}"></td>
+                </tr>
+            </table>
+            <hr>
+            <a th:href="@{/user/export}" class="btn btn-info">导出excel</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

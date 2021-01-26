@@ -48,6 +48,7 @@
         <option value="$PROJECT_DIR$/spring-boot-mybaits学习/spring-boot-mybatis-plus/pom.xml" />
         <option value="$PROJECT_DIR$/spring-boot认证体系/spring-boot-shiro/pom.xml" />
         <option value="$PROJECT_DIR$/spring-boot-druid监控数据源学习/spring-boot-mybatis-druid/pom.xml" />
+        <option value="$PROJECT_DIR$/spring-boot-easypoi/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">
