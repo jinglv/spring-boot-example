@@ -32,4 +32,19 @@ public class UserServiceImpl implements UserService {
     public List<User> findAll() {
         return userDAO.findAll();
     }
+
+    /**
+     * 保存所有用户信息
+     *
+     * @param users 用户信息
+     */
+    @Override
+    public void saveAll(List<User> users) {
+        users.forEach(user -> {
+            user.setId(null);
+            String photoFileName = user.getPhoto().substring(user.getPhoto().lastIndexOf("/") + 1);
+            user.setPhoto(photoFileName);
+            userDAO.save(user);
+        });
+    }
 }

@@ -16,4 +16,11 @@ public interface UserService {
      * @return 返回用户信息列表
      */
     List<User> findAll();
+
+    /**
+     * 保存所有用户信息
+     *
+     * @param users 用户信息
+     */
+    void saveAll(List<User> users);
 }

@@ -232,7 +232,7 @@ import java.util.Date;
 @Data
 @ExcelTarget("users")
 public class User implements Serializable {
-    
+
     private static final long serialVersionUID = -9205298549640800970L;
 
     @Excel(name = "编号")
@@ -241,13 +241,14 @@ public class User implements Serializable {
     private String name;
     @Excel(name = "生日", format = "yyyy年MM月dd日")
     private Date bir;
-    @Excel(name = "头像信息", type = 2, savePath = "/Users/apple/JavaProject/spring-boot-example/spring-boot-easypoi/src/main/resources/static/")
+    @Excel(name = "头像", type = 2, savePath = "/Users/apple/JavaProject/spring-boot-example/spring-boot-easypoi/src/main/resources/static/imgs/")
     private String photo;
-    @Excel(name = "爱好", width = 12.0)
+    @Excel(name = "年龄", width = 12.0)
     private Integer age;
     @Excel(name = "状态", replace = {"激活_1", "锁定_0"})
     private String status;
 }
+
 
 ```
 
@@ -480,5 +481,361 @@ public class UserController {
 
 ## 导入数据
 
+1. 开发DAO&Mapper
+
+   UserDAO.java中新增save方法
+
+   ```java
+   package com.example.excel.demo.dao;
+   
+   import com.example.excel.demo.entity.User;
+   
+   import java.util.List;
+   
+   /**
+    * @author jingLv
+    * @date 2021/01/26
+    */
+   public interface UserDAO {
+   
+       /**
+        * 查询所有用户信息
+        *
+        * @return 返回用户信息列表
+        */
+       List<User> findAll();
+   
+       /**
+        * 保存所有用户信息
+        *
+        * @param user 用户信息
+        * @return 返回结果
+        */
+       int save(User user);
+   }
+   
+   ```
+
+   UserMapper.xml中新增插入SQL语句
+
+   ```xml
+   <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+   <mapper namespace="com.example.excel.demo.dao.UserDAO">
+   
+       <!--查询所有-->
+       <select id="findAll" resultType="com.example.excel.demo.entity.User">
+           SELECT `id`, `name`, `bir`, `age`, `photo`, `status`
+           FROM `t_user`
+       </select>
+   
+       <!--插入用户信息-->
+       <insert id="save" parameterType="com.example.excel.demo.entity.User" useGeneratedKeys="true" keyProperty="id">
+           insert into `t_user`
+           values (#{id}, #{name}, #{bir}, #{age}, #{photo}, #{status})
+       </insert>
+   </mapper>
+   ```
+
+   
+
+2. 开发Service接口和实现类
+
+   UserService.java新增保存所有用户信息接口
+
+   ```java
+   package com.example.excel.demo.service;
+   
+   import com.example.excel.demo.entity.User;
+   
+   import java.util.List;
+   
+   /**
+    * @author jingLv
+    * @date 2021/01/26
+    */
+   public interface UserService {
+   
+       /**
+        * 查询所有用户信息
+        *
+        * @return 返回用户信息列表
+        */
+       List<User> findAll();
+   
+       /**
+        * 保存所有用户信息
+        *
+        * @param users 用户信息
+        */
+       void saveAll(List<User> users);
+   }
+   
+   ```
+
+   UserServiceImpl.java新增保存所有用户信息的实现
+
+   ```java
+   package com.example.excel.demo.service.impl;
+   
+   import com.example.excel.demo.dao.UserDAO;
+   import com.example.excel.demo.entity.User;
+   import com.example.excel.demo.service.UserService;
+   import org.springframework.stereotype.Service;
+   import org.springframework.transaction.annotation.Propagation;
+   import org.springframework.transaction.annotation.Transactional;
+   
+   import java.util.List;
+   
+   /**
+    * @author jingLv
+    * @date 2021/01/26
+    */
+   @Service
+   public class UserServiceImpl implements UserService {
+   
+       private final UserDAO userDAO;
+   
+       public UserServiceImpl(UserDAO userDAO) {
+           this.userDAO = userDAO;
+       }
+   
+       /**
+        * 查询所有用户信息
+        *
+        * @return 返回用户信息列表
+        */
+       @Override
+       @Transactional(propagation = Propagation.SUPPORTS)
+       public List<User> findAll() {
+           return userDAO.findAll();
+       }
+   
+       /**
+        * 保存所有用户信息
+        *
+        * @param users 用户信息
+        */
+       @Override
+       public void saveAll(List<User> users) {
+           users.forEach(user -> {
+               user.setId(null);
+               String photoFileName = user.getPhoto().substring(user.getPhoto().lastIndexOf("/") + 1);
+               user.setPhoto(photoFileName);
+               userDAO.save(user);
+           });
+       }
+   }
+   ```
+
+   
+
+3. 开发controller
+
+   ```java
+   package com.example.excel.demo.controller;
+   
+   import cn.afterturn.easypoi.excel.ExcelImportUtil;
+   import cn.afterturn.easypoi.excel.entity.ImportParams;
+   import com.example.excel.demo.entity.User;
+   import com.example.excel.demo.service.UserService;
+   import lombok.extern.slf4j.Slf4j;
+   import org.springframework.stereotype.Controller;
+   import org.springframework.web.bind.annotation.RequestMapping;
+   import org.springframework.web.multipart.MultipartFile;
+   
+   import javax.servlet.http.HttpServletRequest;
+   import java.util.List;
+   
+   /**
+    * @author jingLv
+    * @date 2021/01/26
+    */
+   @Slf4j
+   @Controller
+   @RequestMapping("/user")
+   public class UserController {
+   
+       private final UserService userService;
+   
+       public UserController(UserService userService) {
+           this.userService = userService;
+       }
+   
+       /**
+        * 查询所有
+        *
+        * @param request HttpServletRequest
+        * @return 返回页面
+        */
+       @RequestMapping("list")
+       public String findAll(HttpServletRequest request) {
+           List<User> users = userService.findAll();
+           request.setAttribute("users", users);
+           return "index";
+       }
+   
+       /**
+        * 导入Excel文件
+        *
+        * @param excelFile excel文件
+        * @return 返回跳转list页面
+        */
+       @RequestMapping("import")
+       public String importExcel(MultipartFile excelFile) throws Exception {
+           log.info("文件名：{}", excelFile.getOriginalFilename());
+           // excel导入
+           ImportParams params = new ImportParams();
+           List<User> users = ExcelImportUtil.importExcel(excelFile.getInputStream(), User.class, params);
+           userService.saveAll(users);
+           // 上传完成之后跳转到查询所有信息路径
+           return "redirect:/user/list";
+       }
+   }
+   
+   ```
+
+4. 修改配置文件
+
+   application.properties中配置图片的静态路径
+
+   ```properties
+   # 定义存储图片路径
+   upload.dir=/Users/apple/JavaProject/spring-boot-example/spring-boot-easypoi/src/main/resources/static/imgs
+   # 静态路径放行
+   spring.web.resources.static-locations=classpath:/static,file:${upload.dir}
+   ```
+
+5. 编辑页面index.html
+
+   - 表单提交方式必须是post
+   - 表单的enctype必须为multipart/form-data
+
+   ```html
+   <!DOCTYPE html>
+   <html lang="en" xmlns:th="http://www.thymeleaf.org">
+   <head>
+       <meta charset="UTF-8">
+       <title>导入excel的主页面</title>
+       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+             integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+   </head>
+   <body>
+   <div class="container-fluid">
+       <div class="row">
+           <div class="col-md-12">
+               <h1>选择Excel文件导入到数据中</h1>
+               <form th:action="@{/user/import}" method="post" enctype="multipart/form-data" class="form-inline">
+                   <div class="form-group">
+                       <input class="form-control" type="file" name="excelFile">
+                       <input type="submit" class="btn btn-danger" value="导入数据">
+                   </div>
+               </form>
+           </div>
+           <div class="col-md-12">
+               <h1>显示导入数据列表</h1>
+               <table class="table table-bordered">
+                   <tr>
+                       <th>编号</th>
+                       <th>头像</th>
+                       <th>姓名</th>
+                       <th>生日</th>
+                       <th>年龄</th>
+                       <th>状态</th>
+                   </tr>
+                   <tr th:each="user : ${users}">
+                       <td th:text="${user.id}"></td>
+                       <td><img th:src="${'/imgs/'+ user.photo}" height="60px" alt=""></td>
+                       <td th:text="${user.name}"></td>
+                       <td th:text="${#dates.format(user.bir,'yyyy-MM-dd')}"></td>
+                       <td th:text="${user.age}"></td>
+                       <td th:text="${user.status}"></td>
+                   </tr>
+               </table>
+               <hr>
+               <a th:href="@{/user/export}" class="btn btn-info">导出excel</a>
+           </div>
+       </div>
+   </div>
+   
+   </body>
+   </html>
+   ```
+
+   
+
+6. 启动项目导入Excel数据及查看结果
+
+   ![image-20210127114556805](https://gitee.com/JeanLv/study_image/raw/master///image-20210127114556805.png)
+
 ## 导出数据
+
+1. 开发Controller，下载功能
+
+   ```java
+       /**
+        * 导出excel
+        *
+        * @param response 响应response
+        * @throws IOException io异常
+        */
+       @RequestMapping("export")
+       public void exportExcel(HttpServletResponse response) throws IOException {
+           // 查询数据库User的所有数据
+           List<User> users = userService.findAll();
+           // 用户图片的处理
+           users.forEach(user -> {
+               try {
+                   Excel excelAnn = user.getClass().getDeclaredField("photo").getAnnotation(Excel.class);
+                   user.setPhoto(excelAnn.savePath() + '/' + user.getPhoto());
+               } catch (NoSuchFieldException e) {
+                   e.printStackTrace();
+               }
+           });
+           // 设置response响应头信息
+           response.setHeader("content-disposition", "attachment;fileName=" + URLEncoder.encode("用户列表.xls", "UTF-8"));
+           // 生成Excel
+           Workbook workbook = ExcelExportUtil.exportExcel(new ExportParams("用户列表信息", "用户信息"), User.class, users);
+           ServletOutputStream outputStream = response.getOutputStream();
+           workbook.write(outputStream);
+           outputStream.close();
+           workbook.close();
+       }
+   ```
+
+   
+
+2. 编辑index.html
+
+   ```html
+   <!DOCTYPE html>
+   <html lang="en" xmlns:th="http://www.thymeleaf.org">
+   <head>
+       <meta charset="UTF-8">
+       <title>导入excel的主页面</title>
+       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+             integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+   </head>
+   <body>
+   <div class="container-fluid">
+       <div class="row">
+           <div class="col-md-12">
+   							……
+           </div>
+           <div class="col-md-12">
+          				……
+               <hr>
+               <a th:href="@{/user/export}" class="btn btn-info">导出excel</a>
+           </div>
+       </div>
+   </div>
+   
+   </body>
+   </html>
+   ```
+
+   
+
+3. 启动项目测试excel导出及结果
+
+   ![image-20210127115731093](https://gitee.com/JeanLv/study_image/raw/master///image-20210127115731093.png)
 

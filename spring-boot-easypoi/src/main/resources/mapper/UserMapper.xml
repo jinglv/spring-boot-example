@@ -1,8 +1,15 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.excel.demo.dao.UserDAO">
+
     <!--查询所有-->
     <select id="findAll" resultType="com.example.excel.demo.entity.User">
         SELECT `id`, `name`, `bir`, `age`, `photo`, `status`
         FROM `t_user`
     </select>
+
+    <!--插入用户信息-->
+    <insert id="save" parameterType="com.example.excel.demo.entity.User" useGeneratedKeys="true" keyProperty="id">
+        insert into `t_user`
+        values (#{id}, #{name}, #{bir}, #{age}, #{photo}, #{status})
+    </insert>
 </mapper>

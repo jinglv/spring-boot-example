@@ -16,4 +16,12 @@ public interface UserDAO {
      * @return 返回用户信息列表
      */
     List<User> findAll();
+
+    /**
+     * 保存所有用户信息
+     *
+     * @param user 用户信息
+     * @return 返回结果
+     */
+    int save(User user);
 }
