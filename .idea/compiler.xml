@@ -7,37 +7,43 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="spring-boot-mybatis-annotation" />
-        <module name="spring-boot-banner" />
-        <module name="spring-boot-maven" />
-        <module name="spring-boot-jpa" />
-        <module name="spring-boot-jwt" />
+        <module name="spring-boot-rest-template" />
         <module name="spring-boot-mybatis-druid" />
-        <module name="spring-boot-easypoi" />
-        <module name="spring-boot-mybatis-annotaion-multi" />
-        <module name="spring-boot-mybatis" />
-        <module name="spring-boot-mybatis-multi" />
-        <module name="spring-boot-mybatis-plus" />
         <module name="spring-boot-shiro" />
+        <module name="spring-boot-mybatis-plus" />
+        <module name="spring-boot-jpa" />
+        <module name="spring-boot-mybatis-annotaion-multi" />
+        <module name="spring-boot-mybatis-annotation" />
+        <module name="spring-boot-mybatis" />
+        <module name="spring-boot-maven" />
+        <module name="spring-boot-easypoi" />
+        <module name="spring-boot-mybatis-multi" />
+        <module name="spring-boot-banner" />
+        <module name="spring-boot-memcache" />
+        <module name="spring-boot-jwt" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="sping-boot-rest-template" target="1.8" />
       <module name="spring-maven-boot" target="1.5" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="sping-boot-rest-template" options="-parameters" />
       <module name="spring-boot-banner" options="-parameters" />
       <module name="spring-boot-easypoi" options="-parameters" />
       <module name="spring-boot-jpa" options="-parameters" />
       <module name="spring-boot-jwt" options="-parameters" />
       <module name="spring-boot-maven" options="-parameters" />
+      <module name="spring-boot-memcache" options="-parameters" />
       <module name="spring-boot-mybatis" options="-parameters" />
       <module name="spring-boot-mybatis-annotaion-multi" options="-parameters" />
       <module name="spring-boot-mybatis-annotation" options="-parameters" />
       <module name="spring-boot-mybatis-druid" options="-parameters" />
       <module name="spring-boot-mybatis-multi" options="-parameters" />
       <module name="spring-boot-mybatis-plus" options="-parameters" />
+      <module name="spring-boot-rest-template" options="-parameters" />
       <module name="spring-boot-shiro" options="-parameters" />
     </option>
   </component>

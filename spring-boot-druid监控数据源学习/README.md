@@ -148,7 +148,7 @@ public class DruidConfig {
 }
 ```
 
-配置完成后，直接启动项目访问地址：http://localhost:port/druid，就会出现 Druid 监控后台的登录页面，输入账户和密码后，就会进入首页。
+配置完成后，直接启动项目访问地址：http://ip:port/druid，就会出现 Druid 监控后台的登录页面，输入账户和密码后，就会进入首页。
 
 ![image-20210122132920384](https://gitee.com/JeanLv/study_image/raw/master///image-20210122132920384.png)
 

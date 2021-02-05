@@ -11,6 +11,7 @@
 
     <modules>
         <module>spring-boot-banner</module>
+        <module>spring-boot-rest-template</module>
         <module>spring-boot-easypoi</module>
         <module>spring-boot项目创建/spring-boot-maven</module>
         <module>spring-boot认证体系/spring-boot-jwt</module>
@@ -20,6 +21,7 @@
         <module>spring-boot-mybatis学习/spring-boot-mybatis-multi</module>
         <module>spring-boot-mybatis学习/spring-boot-mybatis-annotation</module>
         <module>spring-boot-mybatis学习/spring-boot-mybatis-annotaion-multi</module>
+        <module>spring-boot中间件学习/spring-boot-memcache</module>
         <module>spring-boot-jpa学习/spring-boot-jpa</module>
         <module>spring-boot-druid监控数据源学习/spring-boot-mybatis-druid</module>
     </modules>
